@@ -39,3 +39,20 @@ The `first_try` notebook needs two data files:
 
   + 'virus.fasta' https://www.ncbi.nlm.nih.gov/nuccore/NC_031261.1?report=fasta
   + 'bacterium.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/195/955/GCF_000195955.2_ASM19595v2/GCF_000195955.2_ASM19595v2_genomic.fna.gz
+
+# Install
+The `first_try` notebook requires Jupyter, Keras, and TensorFlow. These can be installed
+in a virtual environment as follows:
+
+```
+$ python3.6 -m venv ~/venv/vl
+$ ~/venv/vl/bin/activate
+(vl) $ pip install jupyter keras tensorflow
+```
+
+# Run
+Start the Jupyter notebook server and run the `first_try` notebook.
+
+```
+(vl) $ jupyter notebook
+```
