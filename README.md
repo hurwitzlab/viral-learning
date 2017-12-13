@@ -6,6 +6,8 @@ This repository contains Jupyter notebooks, which are not friendly to `git`. One
 way to help `git` handle these files is to set up `jq` to automatically
 strip out non-code elements from notebooks.
 
+The following recipe comes from http://timstaley.co.uk/posts/making-git-and-jupyter-notebooks-play-nice/.
+
 First install [jq](https://stedolan.github.io/jq/download/).
 
 Next add the following to `~/.gitconfig`. (Note: it may be necessary to specify
@@ -35,5 +37,5 @@ Finally add the following to `~/.gitattributes_global`:
 # Demonstration data
 The `first_try` notebook needs two data files:
 
-  + https://www.ncbi.nlm.nih.gov/nuccore/NC_031261.1?report=fasta
-  + https://www.ncbi.nlm.nih.gov/nuccore/NC_000962.3?report=fasta
+  + 'virus.fasta' https://www.ncbi.nlm.nih.gov/nuccore/NC_031261.1?report=fasta
+  + 'bacterium.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/195/955/GCF_000195955.2_ASM19595v2/GCF_000195955.2_ASM19595v2_genomic.fna.gz
