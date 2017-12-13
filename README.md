@@ -2,13 +2,14 @@
 Deep learning demonstration code.
 
 # Repository Setup
-This repository contains Jupyter notebooks, which are not friendly to `git`. The
-best way to help `git` handle these files is to set up `jq` to automatically
+This repository contains Jupyter notebooks, which are not friendly to `git`. One
+way to help `git` handle these files is to set up `jq` to automatically
 strip out non-code elements from notebooks.
 
 First install [jq](https://stedolan.github.io/jq/download/).
 
-Next add the following to `~/.gitconfig`
+Next add the following to `~/.gitconfig`. (Note: it may be necessary to specify
+the full path to `jq` for tools such as SourceTree.)
 
 ```
 [core]
@@ -25,8 +26,14 @@ smudge = cat
 required = true
 ```
 
-Finally add the following to `./gitattributes_global`:
+Finally add the following to `~/.gitattributes_global`:
 
 ```
 *.ipynb filter=nbstrip_full
 ```
+
+# Demonstration data
+The `first_try` notebook needs two data files:
+
+  + https://www.ncbi.nlm.nih.gov/nuccore/NC_031261.1?report=fasta
+  + https://www.ncbi.nlm.nih.gov/nuccore/NC_000962.3?report=fasta
