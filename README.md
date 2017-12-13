@@ -4,7 +4,7 @@ Deep learning demonstration code.
 # Repository Setup
 This repository contains Jupyter notebooks, which are not friendly to `git`. One
 way to help `git` handle these files is to set up `jq` to automatically
-strip out non-code elements from notebooks.
+strip out non-code elements from notebooks on commit.
 
 The following recipe comes from http://timstaley.co.uk/posts/making-git-and-jupyter-notebooks-play-nice/.
 
