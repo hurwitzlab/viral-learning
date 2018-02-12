@@ -10,7 +10,7 @@
 # 5. train the model
 
 # In[1]:
-
+import sys
 
 import numpy as np
 
@@ -80,15 +80,15 @@ def load_kmer_batches_shuffle_labels(bacteria_kmer_fp, virus_kmer_fp, batch_size
 # In[4]:
 
 
-bacteria_kmer_file1_fp = '../data/bact_kmer_file1.fasta.tab.gz'
-bacteria_kmer_file2_fp = '../data/bact_kmer_file2.fasta.tab.gz'
+bacteria_kmer_file1_fp = sys.argv[1]  #'../data/bact_kmer_file1.fasta.tab.gz'
+bacteria_kmer_file2_fp = sys.argv[2]  #'../data/bact_kmer_file2.fasta.tab.gz'
 
 
 # In[5]:
 
 
-virus_kmer_file1_fp = '../data/vir_kmer_file1.fasta.tab.gz'
-virus_kmer_file2_fp = '../data/vir_kmer_file2.fasta.tab.gz'
+virus_kmer_file1_fp = sys.argv[3]  #'../data/vir_kmer_file1.fasta.tab.gz'
+virus_kmer_file2_fp = sys.argv[4]  #'../data/vir_kmer_file2.fasta.tab.gz'
 
 
 # In[6]:
@@ -152,16 +152,18 @@ for metric_name, metric_value in zip(sanity_model.metrics_names, sanity_model_pe
     print('{}: {:5.2f}'.format(metric_name, metric_value))
 
 # train
+steps = int(sys.argv[5])
+
 model.fit_generator(
     generator=load_kmer_batches(bacteria_kmer_file1_fp, virus_kmer_file1_fp, 16),
     epochs=2,
-    steps_per_epoch=1000,
+    steps_per_epoch=steps,
     workers=2)
 
 # test
 model_performance = model.evaluate_generator(
     generator=load_kmer_batches(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 16),
-    steps=1000,
+    steps=steps,
     workers=2)
 
 for metric_name, metric_value in zip(model.metrics_names, model_performance):
