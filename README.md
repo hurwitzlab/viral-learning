@@ -50,10 +50,10 @@ $ conda create -n vl keras tensorflow pandas scikit-learn
 An installation for GPU nodes on Ocelote can be created like this:
 ```
 $ qsub -I -N gpu-vl -m bea -M <your-email@address> -W group_list=bhurwitz -q standard -l select=1:ncpus=28:ngpus=1:mem=168gb -l cput=01:00:00 -l walltime=01:00:00
-conda create -n vlgpu pandas scikit-learn
-source activate vlgpu
-conda install -c anaconda tensorflow-gpu
-conda install keras
+$ conda create -n vlgpu pandas scikit-learn
+$ source activate vlgpu
+$ conda install -c anaconda tensorflow-gpu
+$ conda install keras
 ```
 
 # Run
