@@ -20,6 +20,11 @@ import sklearn.utils
 from keras.models import Sequential
 from keras.layers import Dense
 
+# this does not seem to help
+#import tensorflow as tf
+#sess = tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=2))
+#from keras import backend as K
+#K.set_session(sess)
 
 # ### 1. Load Data
 
