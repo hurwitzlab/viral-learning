@@ -34,25 +34,32 @@ Finally add the following to `~/.gitattributes_global`:
 *.ipynb filter=nbstrip_full
 ```
 
-# Demonstration data
-The `first_try` notebook needs two data files:
-
-  + 'virus.fasta' https://www.ncbi.nlm.nih.gov/nuccore/NC_031261.1?report=fasta
-  + 'bacterium.fna.gz' ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/195/955/GCF_000195955.2_ASM19595v2/GCF_000195955.2_ASM19595v2_genomic.fna.gz
-
 # Install
-The `first_try` notebook requires Jupyter, Keras, and TensorFlow. These can be installed
-in a virtual environment as follows:
-
+The required packages can be installed in a virtual environment by the usual method:
 ```
 $ python3.6 -m venv ~/venv/vl
 $ ~/venv/vl/bin/activate
-(vl) $ pip install jupyter keras tensorflow
+(vl) $ pip install -r keras tensorflow pandas scikit-learn
+```
+
+Installation on Ocelote is simmilar but uses the Anaconda distribution:
+```
+$ conda create -n vl keras tensorflow pandas scikit-learn
+```
+
+An installation for GPU nodes on Ocelote can be created like this:
+```
+$ qsub -I -N gpu-vl -m bea -M <your-email@address> -W group_list=bhurwitz -q standard -l select=1:ncpus=28:ngpus=1:mem=168gb -l cput=01:00:00 -l walltime=01:00:00
+conda create -n vlgpu pandas scikit-learn
+source activate vlgpu
+conda install -c anaconda tensorflow-gpu
+conda install keras
 ```
 
 # Run
-Start the Jupyter notebook server and run the `first_try` notebook.
+Start the Jupyter notebook server and run the `kmer_nn_np_generator.ipynb` notebook.
 
 ```
 (vl) $ jupyter notebook
 ```
+
