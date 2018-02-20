@@ -1,0 +1,10 @@
+Bootstrap: docker
+From: tensorflow/tensorflow:latest-py3
+
+%post
+   apt update
+   pip3 install keras pandas scikit-learn scipy
+
+%environment
+
+%test
