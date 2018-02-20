@@ -11,6 +11,7 @@
 
 # In[1]:
 import sys
+import time
 
 import numpy as np
 
@@ -65,7 +66,7 @@ def load_kmer_batches(bacteria_kmer_fp, virus_kmer_fp, batch_size):
         usecols=not_read_type,
         engine='c',
         chunksize=batch_size)
-    
+
     labels = np.vstack((np.zeros((batch_size, 1)), np.ones((batch_size, 1))))
 
     for bacteria_batch, virus_batch in zip(bacteria_kmer_iter, virus_kmer_iter):
@@ -117,12 +118,16 @@ print('batch sample count  : {}'.format(batch_sample_count))
 
 
 # ### 4. Build a Model
+# A single hidden layer of 8 or 16 nodes gives 0.8 test accuracy on 1600/1600
+# (100 steps) training samples in 2 epochs. Training takes about 15 minutes
+# per epoch.
 
 # In[8]:
 
 
 sanity_model = Sequential()
 sanity_model.add(Dense(16, activation='relu', input_dim=batch_feature_count))
+sanity_model.add(Dense(8, activation='relu'))
 sanity_model.add(Dense(1, activation='sigmoid'))
 
 sanity_model.compile(optimizer='adam',
@@ -130,7 +135,8 @@ sanity_model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 model = Sequential()
-model.add(Dense(8, activation='relu', input_dim=batch_feature_count))
+model.add(Dense(16, activation='relu', input_dim=batch_feature_count))
+model.add(Dense(8, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 
 model.compile(optimizer='adam',
@@ -159,18 +165,21 @@ for metric_name, metric_value in zip(sanity_model.metrics_names, sanity_model_pe
 # train
 steps = int(sys.argv[5])
 
+t0 = time.time()
 model.fit_generator(
     generator=load_kmer_batches(bacteria_kmer_file1_fp, virus_kmer_file1_fp, 16),
     epochs=2,
     steps_per_epoch=steps,
     workers=2)
+print('training done in {:5.2f}s'.format(time.time()-t0))
 
 # test
+t0 = time.time()
 model_performance = model.evaluate_generator(
     generator=load_kmer_batches(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 16),
     steps=steps,
     workers=2)
+print('test done in {:5.2f}s'.format(time.time()-t0))
 
 for metric_name, metric_value in zip(model.metrics_names, model_performance):
     print('{}: {:5.2f}'.format(metric_name, metric_value))
-
