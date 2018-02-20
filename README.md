@@ -42,7 +42,7 @@ $ ~/venv/vl/bin/activate
 (vl) $ pip install -r keras tensorflow pandas scikit-learn
 ```
 
-Installation on Ocelote is simmilar but uses the Anaconda distribution:
+Installation on Ocelote is similar but uses the Anaconda distribution:
 ```
 $ conda create -n vl keras tensorflow pandas scikit-learn
 ```
