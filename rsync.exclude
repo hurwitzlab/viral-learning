@@ -1,0 +1,7 @@
+.DS_Store
+.git
+*.img*
+rsync.*
+*.idea
+*.ipynb
+*.gz
