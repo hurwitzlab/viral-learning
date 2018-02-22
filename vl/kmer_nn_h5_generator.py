@@ -154,12 +154,13 @@ for metric_name, metric_value in zip(sanity_model.metrics_names, sanity_model_pe
     print('{}: {:5.2f}'.format(metric_name, metric_value))
 
 # train
-steps = int(sys.argv[5])
+epochs = int(sys.argv[5])
+steps = int(sys.argv[6])
 
 t0 = time.time()
 model.fit_generator(
     generator=load_kmer_batches_h5(bacteria_kmer_file1_fp, virus_kmer_file1_fp, 16),
-    epochs=2,
+    epochs=epochs,
     steps_per_epoch=steps,
     workers=2)
 print('training done in {:5.2f}s'.format(time.time()-t0))
