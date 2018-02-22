@@ -14,7 +14,7 @@ row_count = int(sys.argv[4])
 
 def read_tsv_write_h5(tsv_fp, h5_fp, dset_name, line_count):
     t0 = time.time()
-    with h5py.File(h5_fp, 'w') as h5_file, gzip.open(tsv_fp, 'rt') as input_file:
+    with h5py.File(h5_fp, 'w') as h5_file, open(tsv_fp, 'rt') as input_file:
         input_header = input_file.readline().strip().split('\t')
         # do not store the first and last columns
         # store only kmer counts
