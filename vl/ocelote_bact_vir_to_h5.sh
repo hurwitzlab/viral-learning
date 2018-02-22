@@ -9,26 +9,26 @@ time \
     ${TRAINING_DATA_DIR}/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab \
     ${H5_DATA_DIR}/clean-bact/training1/extract/kmers/kmer_file1.h5 \
     bacteria \
-    200000 &
+    100000 &
 
 time \
   python to_h5.py \
     ${TRAINING_DATA_DIR}/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab \
     ${H5_DATA_DIR}/clean-bact/training1/extract/kmers/kmer_file2.h5 \
     bacteria \
-    200000 &
+    100000 &
 
 time \
   python to_h5.py \
     ${TRAINING_DATA_DIR}/clean-vir/training1/extract/kmers/kmer_file1.fasta.tab \
     ${H5_DATA_DIR}/clean-vir/training1/extract/kmers/kmer_file1.h5 \
     virus \
-    200000 &
+    100000 &
 
 time \
   python to_h5.py \
     ${TRAINING_DATA_DIR}/clean-vir/training1/extract/kmers/kmer_file2.fasta.tab \
     ${H5_DATA_DIR}/clean-vir/training1/extract/kmers/kmer_file2.h5 \
     virus \
-    200000 &
+    100000 &
 

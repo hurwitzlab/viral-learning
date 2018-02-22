@@ -117,8 +117,9 @@ print('batch sample count  : {}'.format(batch_sample_count))
 
 
 sanity_model = Sequential()
-sanity_model.add(Dense(16, activation='relu', input_dim=batch_feature_count))
-sanity_model.add(Dense(8, activation='relu'))
+sanity_model.add(Dense(64, activation='relu', input_dim=batch_feature_count))
+sanity_model.add(Dense(32, activation='relu'))
+sanity_model.add(Dense(16, activation='relu'))
 sanity_model.add(Dense(1, activation='sigmoid'))
 
 sanity_model.compile(optimizer='adam',
@@ -126,8 +127,9 @@ sanity_model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 model = Sequential()
-model.add(Dense(16, activation='relu', input_dim=batch_feature_count))
-model.add(Dense(8, activation='relu'))
+model.add(Dense(64, activation='relu', input_dim=batch_feature_count))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 
 model.compile(optimizer='adam',
@@ -136,42 +138,46 @@ model.compile(optimizer='adam',
 
 # ### 5. Train the Model
 
+# train
+epochs = int(sys.argv[5])
+steps = int(sys.argv[6])
+half_batch = 16
 
 # train with shuffled labels as sanity check
 sanity_model.fit_generator(
-    generator=load_kmer_batches_h5_shuffle_labels(bacteria_kmer_file1_fp, virus_kmer_file1_fp, 16),
-    epochs=2,
-    steps_per_epoch=10,
-    workers=2)
+    generator=load_kmer_batches_h5_shuffle_labels(bacteria_kmer_file1_fp, virus_kmer_file1_fp, half_batch),
+    epochs=epochs,
+    steps_per_epoch=steps)
 
 sanity_model_performance = sanity_model.evaluate_generator(
-    generator=load_kmer_batches_h5(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 16),
-    steps=10,
-    workers=2)
+    generator=load_kmer_batches_h5(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 1),
+    steps=4900)
 
 print('sanity-check model performance:')
 for metric_name, metric_value in zip(sanity_model.metrics_names, sanity_model_performance):
     print('{}: {:5.2f}'.format(metric_name, metric_value))
 
-# train
-epochs = int(sys.argv[5])
-steps = int(sys.argv[6])
+generator = load_kmer_batches_h5(
+    bacteria_kmer_file1_fp,
+    virus_kmer_file1_fp,
+    half_batch)
+for epoch in range(1, epochs+1):
+    t0 = time.time()
+    model.fit_generator(
+        generator=generator,
+        epochs=1,
+        steps_per_epoch=steps)
+    print('training epock {} done in {:5.2f}s'.format(epoch, time.time()-t0))
 
-t0 = time.time()
-model.fit_generator(
-    generator=load_kmer_batches_h5(bacteria_kmer_file1_fp, virus_kmer_file1_fp, 16),
-    epochs=epochs,
-    steps_per_epoch=steps,
-    workers=2)
-print('training done in {:5.2f}s'.format(time.time()-t0))
+    # test
+    t0 = time.time()
+    model_performance = model.evaluate_generator(
+        generator=load_kmer_batches_h5(
+            bacteria_kmer_file2_fp,
+            virus_kmer_file2_fp,
+            1),
+        steps=4900)
 
-# test
-t0 = time.time()
-model_performance = model.evaluate_generator(
-    generator=load_kmer_batches_h5(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 16),
-    steps=steps,
-    workers=2)
-print('test done in {:5.2f}s'.format(time.time()-t0))
-
-for metric_name, metric_value in zip(model.metrics_names, model_performance):
-    print('{}: {:5.2f}'.format(metric_name, metric_value))
+    print('test epoch {} done in {:5.2f}s'.format(epoch, time.time()-t0))
+    for metric_name, metric_value in zip(model.metrics_names, model_performance):
+        print('{}: {:5.2f}'.format(metric_name, metric_value))
