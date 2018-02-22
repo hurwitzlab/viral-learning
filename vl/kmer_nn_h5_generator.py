@@ -167,7 +167,7 @@ for epoch in range(1, epochs+1):
         generator=generator,
         epochs=1,
         steps_per_epoch=steps)
-    print('training epock {} done in {:5.2f}s'.format(epoch, time.time()-t0))
+    print('training epoch {} done in {:5.2f}s'.format(epoch, time.time()-t0))
 
     # test
     t0 = time.time()
