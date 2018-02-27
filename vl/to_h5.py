@@ -62,7 +62,7 @@ def write_all_training_and_testing_data():
             read_tsv_write_h5_group(
                 tsv_fp=os.path.join(data_source_dir, 'vir_marinzPatric/extract_vir_{}/kmers/kmer_file1.fasta.tab'.format(read_length)),
                 h5_file=h5_file,
-                dset_name='vir_marinzPatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
+                dset_name='vir_marinePatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
                 line_count=testing_line_count)
 
 
