@@ -146,12 +146,12 @@ half_batch = 16
 # train with shuffled labels as sanity check
 sanity_model.fit_generator(
     generator=load_kmer_batches_h5_shuffle_labels(bacteria_kmer_file1_fp, virus_kmer_file1_fp, half_batch),
-    epochs=epochs,
-    steps_per_epoch=steps)
+    epochs=2,
+    steps_per_epoch=500)
 
 sanity_model_performance = sanity_model.evaluate_generator(
     generator=load_kmer_batches_h5(bacteria_kmer_file2_fp, virus_kmer_file2_fp, 1),
-    steps=4900)
+    steps=5000)
 
 print('sanity-check model performance:')
 for metric_name, metric_value in zip(sanity_model.metrics_names, sanity_model_performance):
@@ -176,7 +176,7 @@ for epoch in range(1, epochs+1):
             bacteria_kmer_file2_fp,
             virus_kmer_file2_fp,
             1),
-        steps=4900)
+        steps=5000)
 
     print('test epoch {} done in {:5.2f}s'.format(epoch, time.time()-t0))
     for metric_name, metric_value in zip(model.metrics_names, model_performance):
