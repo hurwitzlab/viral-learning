@@ -8,7 +8,7 @@ import h5py
 import numpy as np
 
 
-data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read/contigs_training/set/cleanSet_Centrifuge'
+data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read'
 data_target_fp = '/extra/jklynch/viral-learning/training_testing.h5'
 
 def write_all_training_and_testing_data():
@@ -23,44 +23,44 @@ def write_all_training_and_testing_data():
         h5_file.create_group('/vir_marinePatric/extract_vir_5000/kmers')
         h5_file.create_group('/vir_marinePatric/extract_vir_10000/kmers')
 
-        training_line_count = 5000
+        training_line_count = 50
 
         read_tsv_write_h5_group(
-            tsv_fp=os.path.join(data_source_dir, 'clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'),
+            tsv_fp=os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'),
             h5_file=h5_file,
             dset_name='clean-bact/training1/extract/kmers/kmer_file1',
             line_count=training_line_count)
 
         read_tsv_write_h5_group(
-            tsv_fp=os.path.join(data_source_dir, 'clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'),
+            tsv_fp=os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'),
             h5_file=h5_file,
             dset_name='clean-bact/training1/extract/kmers/kmer_file2',
             line_count=training_line_count)
 
         read_tsv_write_h5_group(
-            tsv_fp=os.path.join(data_source_dir, 'clean-vir/training1/extract/kmers/kmer_file1.fasta.tab'),
+            tsv_fp=os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file1.fasta.tab'),
             h5_file=h5_file,
             dset_name='clean-vir/training1/extract/kmers/kmer_file1',
             line_count=training_line_count)
 
         read_tsv_write_h5_group(
-            tsv_fp=os.path.join(data_source_dir, 'clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'),
+            tsv_fp=os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'),
             h5_file=h5_file,
             dset_name='clean-vir/training1/extract/kmers/kmer_file2',
             line_count=training_line_count)
 
-        testing_line_count = 5000
+        testing_line_count = 50
 
         for read_length in (100, 200, 500, 1000, 5000, 10000):
             read_tsv_write_h5_group(
-                tsv_fp=os.path.join(data_source_dir, 'bact_marinePatric/extract_bact_{}/kmers/kmer_file1.fasta.tab'.format(read_length)),
+                tsv_fp=os.path.join(data_source_dir, 'eval_set/bact_marinePatric/extract_bact_{}/kmers/kmer_file1.fasta.tab'.format(read_length)),
                 h5_file=h5_file,
                 dset_name='bact_marinePatric/extract_bact_{}/kmers/kmer_file1'.format(read_length),
                 line_count=testing_line_count)
 
         for read_length in (100, 200, 500, 1000, 5000, 10000):
             read_tsv_write_h5_group(
-                tsv_fp=os.path.join(data_source_dir, 'vir_marinzPatric/extract_vir_{}/kmers/kmer_file1.fasta.tab'.format(read_length)),
+                tsv_fp=os.path.join(data_source_dir, 'eval_set/vir_marinzPatric/extract_vir_{}/kmers/kmer_file1.fasta.tab'.format(read_length)),
                 h5_file=h5_file,
                 dset_name='vir_marinePatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
                 line_count=testing_line_count)
