@@ -126,7 +126,6 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
                 dataset_row += 1
 
             print('wrote {} rows in {:5.2f}s'.format(dset.shape[0], time.time()-t0))
-            return finalize(mean_var_state)
 
 
 t0 = time.time()
