@@ -119,16 +119,10 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
                     chunks=(1, dset_shape[1]),
                     compression='gzip')
 
-                mean_var_state = (0, np.zeros(dset_shape), np.zeros(dset_shape))
-
             for line in input_file:
                 if dataset_row >= dset.shape[0]:
                     break
-                x = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
-
-                update(mean_var_state, x)
-
-                dset[dataset_row, :] = x
+                dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
                 dataset_row += 1
 
             print('wrote {} rows in {:5.2f}s'.format(dset.shape[0], time.time()-t0))
