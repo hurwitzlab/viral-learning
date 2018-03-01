@@ -24,7 +24,7 @@ def write_all_training_and_testing_data():
         h5_file.create_group('/vir_marinePatric/extract_vir_5000/kmers')
         h5_file.create_group('/vir_marinePatric/extract_vir_10000/kmers')
 
-        training_line_count = 100
+        training_line_count = 300000
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'), ),
