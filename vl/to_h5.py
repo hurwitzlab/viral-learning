@@ -67,37 +67,9 @@ def write_all_training_and_testing_data():
                 line_count=testing_line_count)
 
 
-# https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
-# for a new value newValue, compute the new count, new mean, the new M2.
-# mean accumulates the mean of the entire dataset
-# M2 aggregates the squared distance from the mean
-# count aggregates the number of samples seen so far
-def update(existingAggregate, newValue):
-    (count, mean, M2) = existingAggregate
-    count = count + 1
-    delta = newValue - mean
-    mean = mean + delta / count
-    delta2 = newValue - mean
-    M2 = M2 + delta * delta2
-
-    return (count, mean, M2)
-
-
-# retrieve the mean and variance from an aggregate
-def finalize(existingAggregate):
-    (count, mean, M2) = existingAggregate
-    (mean, variance) = (mean, M2/(count - 1))
-    if count < 2:
-        return float('nan')
-    else:
-        return (mean, variance)
-
-
 def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
     t0 = time.time()
     dataset_row = 0
-
-    mean_var_state = None
 
     for i, tsv_fp in enumerate(tsv_fp_list):
         print('reading "{}"'.format(tsv_fp))
@@ -112,6 +84,7 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
                 dset = h5_file.create_dataset(
                     dset_name,
                     dset_shape,
+                    maxshape=dset_shape,  # make the dataset shrinkable but not enlargeable
                     # I tried np.float32 to save space but very little space was saved
                     # 139MB vs 167MB for 5000 rows
                     dtype=np.float64,
@@ -125,7 +98,17 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
                 dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
                 dataset_row += 1
 
-            print('wrote {} rows in {:5.2f}s'.format(dset.shape[0], time.time()-t0))
+    print('wrote {} rows in {:5.2f}s'.format(dataset_row, time.time()-t0))
+
+    if dataset_row == dset_shape[0]:
+        print('dataset size is correct')
+    elif dataset_row < dset_shape[0]:
+        print('shrinking dataset from shape {} to {}'.format(dset_shape, (dataset_row, dset_shape[1])))
+        dset.resize((dataset_row, dset_shape[1]))
+    else:
+        # should not happen
+        raise Exception()
+
 
 
 t0 = time.time()
