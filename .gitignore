@@ -1,11 +1,14 @@
 data/
 
+*.h5
 *.gz
-
+*.pdf
 *.fasta
+*.fasta.tab
 *.fna.gz
 
 .idea/
+.pytest_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
