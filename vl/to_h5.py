@@ -127,6 +127,10 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
                 t00 = time.time()
                 print('  wrote chunk in {:5.2f}s'.format(t00 - t11))
 
+                if sj >= dset.shape[0]:
+                    print('dataset {} is full'.format(dset.name))
+                    break
+
             if sj >= dset.shape[0]:
                 print('dataset {} is full'.format(dset.name))
                 break
