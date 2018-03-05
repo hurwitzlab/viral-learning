@@ -15,6 +15,20 @@ import numpy as np
 data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read'
 data_target_fp = '/extra/jklynch/viral-learning/training_testing.h5'
 
+def create_dataset(h5_file, name, shape):
+    dset = h5_file.create_dataset(
+        name,
+        shape,
+        maxshape=(None, shape[1]),
+        # I tried np.float32 to save space but very little space was saved
+        # 139MB vs 167MB for 5000 rows?
+        dtype=np.float64,
+        # write speed and compression are best with 1-row chunks?
+        chunks=(1, shape[1]),
+        compression='gzip')
+
+    return dset
+
 def write_all_training_and_testing_data():
     h5_fp = data_target_fp
     with h5py.File(h5_fp, 'w') as h5_file:
@@ -28,94 +42,99 @@ def write_all_training_and_testing_data():
         h5_file.create_group('/vir_marinePatric/extract_vir_10000/kmers')
 
         training_line_count = int(sys.argv[1])
+        column_count = 32768
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'), ),
-            h5_file=h5_file,
-            dset_name='clean-bact/training1/extract/kmers/kmer_file1',
-            line_count=training_line_count)
+            dset=create_dataset(h5_file, name='clean-bact/training1/extract/kmers/kmer_file1', shape=(training_line_count, column_count)),
+            chunksize=10000)
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'), ),
-            h5_file=h5_file,
-            dset_name='clean-bact/training1/extract/kmers/kmer_file2',
-            line_count=training_line_count)
+            dset=create_dataset(h5_file, name='clean-bact/training1/extract/kmers/kmer_file2', shape=(training_line_count, column_count)),
+            chunksize=10000)
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file1.fasta.tab'), ),
-            h5_file=h5_file,
-            dset_name='clean-vir/training1/extract/kmers/kmer_file1',
-            line_count=training_line_count)
+            dset=create_dataset(h5_file, name='clean-vir/training1/extract/kmers/kmer_file1', shape=(training_line_count, column_count)),
+            chunksize=10000)
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'), ),
-            h5_file=h5_file,
-            dset_name='clean-vir/training1/extract/kmers/kmer_file2',
-            line_count=training_line_count)
-
-        testing_line_count = 5000
+            dset=create_dataset(h5_file, name='clean-vir/training1/extract/kmers/kmer_file2', shape=(training_line_count, column_count)),
+            chunksize=10000)
 
         for read_length in (100, 200, 500, 1000, 5000, 10000):
             read_tsv_write_h5_group(
                 tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/bact_marinePatric/extract_bact_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
-                h5_file=h5_file,
-                dset_name='bact_marinePatric/extract_bact_{}/kmers/kmer_file1'.format(read_length),
-                line_count=testing_line_count)
+                dset=create_dataset(
+                    h5_file,
+                    name='bact_marinePatric/extract_bact_{}/kmers/kmer_file1'.format(read_length),
+                    shape=(training_line_count, column_count)),
+                chunksize=5000)
 
         for read_length in (100, 200, 500, 1000, 5000, 10000):
             read_tsv_write_h5_group(
                 tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/vir_marinzPatric/extract_vir_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
-                h5_file=h5_file,
-                dset_name='vir_marinePatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
-                line_count=testing_line_count)
+                dset=create_dataset(
+                    h5_file,
+                    name='vir_marinePatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
+                    shape=(training_line_count, column_count)),
+                chunksize=5000)
+
+        print('finished writing {} in {:5.2f}s'.format(h5_fp, time.time() - t0))
+        print('  file size is {:5.2f}MB'.format(os.path.getsize(h5_fp) / 1e6))
 
 
-def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
+def read_chunk(f_, shape):
+    chunk_ = np.zeros(shape)
+    chunk_i = 0
+    for line in f_:
+        chunk_[chunk_i, :] = [float(f) for f in line.rstrip().split('\t')[1:-1]]
+        chunk_i += 1
+        if chunk_i == shape[0]:
+            # end of a chunk!
+            yield chunk_
+            chunk_i = 0
+
+    if chunk_i > 0:
+        # yield a partial chunk
+        yield chunk_[:chunk_i, :]
+
+
+def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
     t0 = time.time()
-    dataset_row = 0
 
     for i, tsv_fp in enumerate(tsv_fp_list):
         print('reading "{}"'.format(tsv_fp))
         with open(tsv_fp, 'rt') as input_file:
-            input_header = input_file.readline().strip().split('\t')
-            if i == 0:
-                # do not store the first and last columns
-                # store only kmer counts
-                # the first is a string, the last is read_type
-                dset_shape = (line_count, len(input_header)-2)
-                print('dataset shape is {}'.format(dset_shape))
-                dset = h5_file.create_dataset(
-                    dset_name,
-                    dset_shape,
-                    maxshape=dset_shape,  # make the dataset shrinkable but not enlargeable
-                    # I tried np.float32 to save space but very little space was saved
-                    # 139MB vs 167MB for 5000 rows?
-                    dtype=np.float64,
-                    # write speed and compression are best with 1-row chunks?
-                    chunks=(1, dset_shape[1]),
-                    compression='gzip')
+            #t0 = time.time()
+            si = 0
+            for fp in tsv_fp_list:
+                with open(fp, 'rt') as f:
+                    print('reading "{}" with size {:5.2f}MB'.format(fp, os.path.getsize(fp) / 1e6))
+                    header_line = f.readline()
+                    print('  header : "{}"'.format(header_line[:30]))
+                    column_count = len(header_line.strip().split('\t'))
+                    print('  header has {} columns'.format(column_count))
 
-            for line in input_file:
-                if dataset_row >= dset.shape[0]:
-                    print('dset {} is full'.format(dset.name))
-                    print('  dataset_row {}'.format(dataset_row))
-                    print('  dset.shape  {}'.format(dset.shape))
-                    break
-                else:
-                    dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
-                    dataset_row += 1
+                    t00 = time.time()
+                    for i, chunk in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
+                        t11 = time.time()
+                        sj = si + chunk.shape[0]
+                        print('read chunk {} with shape {} in {:5.2f}s ({} rows total)'.format(
+                                i, chunk.shape, t11 - t00, sj))
+                        dset[si:sj, :] = chunk
+                        si = sj
+                        t00 = time.time()
+                        print('  wrote chunk in {:5.2f}s'.format(t00 - t11))
 
-    print('wrote {} rows in {:5.2f}s'.format(dataset_row, time.time()-t0))
-
-    if dataset_row == dset_shape[0]:
-        print('dataset size is correct')
-    elif dataset_row < dset_shape[0]:
-        print('shrinking dataset from shape {} to {}'.format(dset_shape, (dataset_row, dset_shape[1])))
-        dset.resize((dataset_row, dset_shape[1]))
-    else:
-        # should not happen
-        raise Exception()
-
+                    print('read {} rows'.format(si))
+                    print('dataset "{}" has shape {}'.format(dset.name, dset.shape))
+                    if sj < dset.shape[0]:
+                        new_shape = (sj, dset.shape[1])
+                        print('resizing dataset from {} to {}'.format(dset.shape, new_shape))
+                        dset.resize(new_shape)
 
 
 t0 = time.time()
