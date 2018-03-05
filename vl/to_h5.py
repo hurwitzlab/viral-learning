@@ -32,36 +32,20 @@ def create_dataset(h5_file, name, shape):
 def write_all_training_and_testing_data():
     h5_fp = data_target_fp
     with h5py.File(h5_fp, 'w') as h5_file:
-        h5_file.create_group('/clean-bact/training1/extract/kmers')
-        h5_file.create_group('/clean-vir/training1/extract/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_100/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_200/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_500/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_1000/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_5000/kmers')
-        h5_file.create_group('/vir_marinePatric/extract_vir_10000/kmers')
-
         training_line_count = int(sys.argv[1])
         column_count = 32768
 
         read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'), ),
-            dset=create_dataset(h5_file, name='clean-bact/training1/extract/kmers/kmer_file1', shape=(training_line_count, column_count)),
+            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file*.fasta.tab'), ),
+            dset=create_dataset(
+                h5_file,
+                name='/clean-bact/training1/extract/kmers',
+                shape=(training_line_count, column_count)),
             chunksize=10000)
 
         read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'), ),
-            dset=create_dataset(h5_file, name='clean-bact/training1/extract/kmers/kmer_file2', shape=(training_line_count, column_count)),
-            chunksize=10000)
-
-        read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file1.fasta.tab'), ),
-            dset=create_dataset(h5_file, name='clean-vir/training1/extract/kmers/kmer_file1', shape=(training_line_count, column_count)),
-            chunksize=10000)
-
-        read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file2.fasta.tab'), ),
-            dset=create_dataset(h5_file, name='clean-vir/training1/extract/kmers/kmer_file2', shape=(training_line_count, column_count)),
+            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file*.fasta.tab'), ),
+            dset=create_dataset(h5_file, name='/clean-vir/training1/extract/kmers', shape=(training_line_count, column_count)),
             chunksize=10000)
 
         for read_length in (100, 200, 500, 1000, 5000, 10000):
@@ -69,7 +53,7 @@ def write_all_training_and_testing_data():
                 tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/bact_marinePatric/extract_bact_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
                 dset=create_dataset(
                     h5_file,
-                    name='bact_marinePatric/extract_bact_{}/kmers/kmer_file1'.format(read_length),
+                    name='/bact_marinePatric/extract_bact_{}/kmers'.format(read_length),
                     shape=(training_line_count, column_count)),
                 chunksize=5000)
 
@@ -78,7 +62,7 @@ def write_all_training_and_testing_data():
                 tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/vir_marinzPatric/extract_vir_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
                 dset=create_dataset(
                     h5_file,
-                    name='vir_marinePatric/extract_vir_{}/kmers/kmer_file1'.format(read_length),
+                    name='/vir_marinePatric/extract_vir_{}/kmers'.format(read_length),
                     shape=(training_line_count, column_count)),
                 chunksize=5000)
 
