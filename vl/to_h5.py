@@ -1,8 +1,11 @@
 """
 Read Alise's training and testing data files and smash them all into one H5 file.
+
+This script is hard-coded to run on ocelote.
 """
 import glob
 import os
+import sys
 import time
 
 import h5py
@@ -24,7 +27,7 @@ def write_all_training_and_testing_data():
         h5_file.create_group('/vir_marinePatric/extract_vir_5000/kmers')
         h5_file.create_group('/vir_marinePatric/extract_vir_10000/kmers')
 
-        training_line_count = 300000
+        training_line_count = int(sys.argv[1])
 
         read_tsv_write_h5_group(
             tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file1.fasta.tab'), ),
@@ -86,7 +89,7 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
                     dset_shape,
                     maxshape=dset_shape,  # make the dataset shrinkable but not enlargeable
                     # I tried np.float32 to save space but very little space was saved
-                    # 139MB vs 167MB for 5000 rows
+                    # 139MB vs 167MB for 5000 rows?
                     dtype=np.float64,
                     # write speed and compression are best with 1-row chunks?
                     chunks=(1, dset_shape[1]),
@@ -94,9 +97,13 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
 
             for line in input_file:
                 if dataset_row >= dset.shape[0]:
+                    print('dset {} is full'.format(dset.name))
+                    print('  dataset_row {}'.format(dataset_row))
+                    print('  dset.shape  {}'.format(dset.shape))
                     break
-                dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
-                dataset_row += 1
+                else:
+                    dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
+                    dataset_row += 1
 
     print('wrote {} rows in {:5.2f}s'.format(dataset_row, time.time()-t0))
 
