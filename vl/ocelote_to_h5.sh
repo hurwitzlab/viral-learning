@@ -12,4 +12,4 @@
 source activate ktf
 
 cd ~/project/viral-learning/vl
-python to_h5.py
+python to_h5.py 200000

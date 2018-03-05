@@ -10,6 +10,7 @@ import time
 
 import h5py
 import numpy as np
+import pandas as pd
 
 
 data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read'
@@ -77,33 +78,46 @@ def read_tsv_write_h5_group(tsv_fp_list, h5_file, dset_name, line_count):
     for i, tsv_fp in enumerate(tsv_fp_list):
         print('reading "{}"'.format(tsv_fp))
         with open(tsv_fp, 'rt') as input_file:
-            input_header = input_file.readline().strip().split('\t')
-            if i == 0:
-                # do not store the first and last columns
-                # store only kmer counts
-                # the first is a string, the last is read_type
-                dset_shape = (line_count, len(input_header)-2)
-                print('dataset shape is {}'.format(dset_shape))
-                dset = h5_file.create_dataset(
-                    dset_name,
-                    dset_shape,
-                    maxshape=dset_shape,  # make the dataset shrinkable but not enlargeable
-                    # I tried np.float32 to save space but very little space was saved
-                    # 139MB vs 167MB for 5000 rows?
-                    dtype=np.float64,
-                    # write speed and compression are best with 1-row chunks?
-                    chunks=(1, dset_shape[1]),
-                    compression='gzip')
+            #input_header = input_file.readline().strip().split('\t')
 
-            for line in input_file:
+            input_reader = pd.read_table(input_file, chunksize=100000, usecols=range(1, 32768+1))
+            #for line in input_file:
+            t0 = time.time()
+            for chunk in input_reader:
+                t1 = time.time()
+                print('read chunk in {:5.2f}s'.format(t1-t0))
+                if i == 0:
+                    # do not store the first and last columns
+                    # store only kmer counts
+                    # the first is a string, the last is read_type
+                    print('chunk shape: {}'.format(chunk.shape))
+                    print('chunk values.shape: {}'.format(chunk.values.shape))
+                    #print(chunk[:5, :5])
+                    print(chunk.values[:5, :5])
+                    dset_shape = (line_count, chunk.shape[1])
+                    print('dataset shape is {}'.format(dset_shape))
+                    dset = h5_file.require_dataset(
+                        dset_name,
+                        dset_shape,
+                        maxshape=dset_shape,  # make the dataset shrinkable but not enlargeable
+                        # I tried np.float32 to save space but very little space was saved
+                        # 139MB vs 167MB for 5000 rows?
+                        dtype=np.float64,
+                        # write speed and compression are best with 1-row chunks?
+                        chunks=(1, dset_shape[1]),
+                        compression='gzip')
+
+                #dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
+                dset[dataset_row:(dataset_row+chunk.shape[0]), :] = chunk.values
+                #dataset_row += 1
+                dataset_row += chunk.shape[0]
+                t0 = time.time()
+                print('wrote chunk in {:52f}s'.format(t0-t1))
                 if dataset_row >= dset.shape[0]:
                     print('dset {} is full'.format(dset.name))
                     print('  dataset_row {}'.format(dataset_row))
                     print('  dset.shape  {}'.format(dset.shape))
                     break
-                else:
-                    dset[dataset_row, :] = np.asarray([float(d) for d in line.strip().split('\t')[1:-1]])
-                    dataset_row += 1
 
     print('wrote {} rows in {:5.2f}s'.format(dataset_row, time.time()-t0))
 
