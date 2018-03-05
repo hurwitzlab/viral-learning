@@ -105,9 +105,10 @@ def read_chunk(f_, shape):
 def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
     t0 = time.time()
 
+    si = 0
+    sj = 0
     for i, fp in enumerate(tsv_fp_list):
         print('reading "{}"'.format(fp))
-        si = 0
         with open(fp, 'rt') as f:
             print('reading "{}" with size {:5.2f}MB'.format(fp, os.path.getsize(fp) / 1e6))
             header_line = f.readline()
@@ -125,6 +126,10 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
                 si = sj
                 t00 = time.time()
                 print('  wrote chunk in {:5.2f}s'.format(t00 - t11))
+
+            if sj >= dset.shape[0]:
+                print('dataset {} is full'.format(dset.name))
+                break
 
     print('read {} rows'.format(si))
     print('dataset "{}" has shape {}'.format(dset.name, dset.shape))
