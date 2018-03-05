@@ -24,33 +24,36 @@ def build_model(input_dim):
     return model
 
 
-def plot_training_performance(training_performance_df, title):
-    with PdfPages('evaluate_logreg_plots_{}.pdf'.format(title)) as pdf:
-        plt.figure()
-        plt.plot(training_performance_df.index, training_performance_df.loss, training_performance_df.val_loss)
-        plt.title('{}\nLogistic Regression\nTraining and Validation Loss'.format(title))
-        plt.xlabel('epoch')
-        plt.ylabel('loss')
-        plt.legend(['training', 'validation'])
-        pdf.savefig()  # saves the current figure into a pdf page
+def plot_training_performance(training_performance_df, title, pdfpages):
+    plt.figure()
+    plt.plot(training_performance_df.index, training_performance_df.loss, training_performance_df.val_loss)
+    plt.title('{}\nLogistic Regression\nTraining and Validation Loss'.format(title))
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.legend(['training', 'validation'])
+    pdfpages.savefig()  # saves the current figure into a pdf page
 
-        plt.figure()
-        plt.plot(training_performance_df.index, training_performance_df.acc, training_performance_df.val_acc)
-        plt.title('{}\nLogistic Regression\nTraining and Validation Accuracy'.format(title))
-        plt.xlabel('epoch')
-        plt.ylabel('accuracy')
-        plt.legend(['training', 'validation'])
-        pdf.savefig()  # saves the current figure into a pdf page
+    plt.figure()
+    plt.plot(training_performance_df.index, training_performance_df.acc, training_performance_df.val_acc)
+    plt.title('{}\nLogistic Regression\nTraining and Validation Accuracy'.format(title))
+    plt.xlabel('epoch')
+    plt.ylabel('accuracy')
+    plt.legend(['training', 'validation'])
+    pdfpages.savefig()  # saves the current figure into a pdf page
 
 
 def main():
     # go!
     #train_test_fp = '../data/short_training_testing.h5'
     train_test_fp = sys.argv[1]
+    epochs = int(sys.argv[2])
     print('reading file "{}"'.format(train_test_fp))
+    # epochs = 2
+    print('{} epochs'.format(epochs))
+
     batch_size = 50
 
-    with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file:
+    with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file, PdfPages('evaluate_logreg_plots.pdf') as pdf:
         bacteria_dset = train_test_file['/clean-bact/training1/extract/kmers/kmer_file1']
         virus_dset = train_test_file['/clean-vir/training1/extract/kmers/kmer_file1']
 
@@ -66,9 +69,6 @@ def main():
         print('{} batches of training data'.format(training_batches_per_epoch))
         print('{} validation samples'.format(validation_sample_count))
         print('{} batches of validation data'.format(validation_batch_count))
-
-        epochs = 100
-        print('{} epochs'.format(epochs))
 
         #
         # train and validate on un-shuffled data
@@ -98,7 +98,7 @@ def main():
 
         training_performance_df = pd.DataFrame(data=history.history, index=range(1, epochs + 1))
         training_performance_df.index.name = 'epoch'
-        plot_training_performance(training_performance_df, title='Un-Shuffled Data')
+        plot_training_performance(training_performance_df, title='Un-Shuffled Data', pdfpages=pdf)
 
         #
         # train and validate on shuffled data
@@ -139,7 +139,7 @@ def main():
 
         training_performance_df = pd.DataFrame(data=history.history, index=range(1, epochs + 1))
         training_performance_df.index.name = 'epoch'
-        plot_training_performance(training_performance_df, title='Shuffled Data')
+        plot_training_performance(training_performance_df, title='Shuffled Data', pdfpages=pdf)
 
 
 if __name__ == '__main__':
