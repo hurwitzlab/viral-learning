@@ -8,6 +8,7 @@ from keras.layers import Dense
 import h5py
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import numpy as np
 import pandas as pd
 
