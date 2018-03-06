@@ -36,7 +36,7 @@ def write_all_training_and_testing_data():
         column_count = 32768
 
         read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file*.fasta.tab'), ),
+            tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file*.fasta.tab'))),
             dset=create_dataset(
                 h5_file,
                 name='/clean-bact/training1/extract/kmers',
@@ -44,7 +44,7 @@ def write_all_training_and_testing_data():
             chunksize=10000)
 
         read_tsv_write_h5_group(
-            tsv_fp_list=(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file*.fasta.tab'), ),
+            tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file*.fasta.tab'))),
             dset=create_dataset(h5_file, name='/clean-vir/training1/extract/kmers', shape=(training_line_count, column_count)),
             chunksize=10000)
 
