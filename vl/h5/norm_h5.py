@@ -99,7 +99,9 @@ def normalize_datasets(input_h5_fp, norm_h5_fp):
                     shape=dset.shape,
                     dtype=dset.dtype,
                     chunks=mean.shape,
-                    compression='gzip')
+                    compression='gzip',
+                    compression_opts=9,
+                    shuffle=True)
                 
                 t0 = time.time()
                 n = 10000
