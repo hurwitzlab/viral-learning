@@ -16,9 +16,4 @@ export OMP_NUM_THREADS=48
 `pwd`
 cd $WORK/project/viral-learning/vl
 
-cp $WORK/project/viral-learning/data/training_testing.h5 /tmp
-
-python h5/norm_h5.py /tmp/training_testing.h5
-
-cp /tmp/norm_training_testing.h5 $WORK/project/viral-learning/norm_training_testing.h5
-
+python h5/norm_h5.py $WORK/project/viral-learning/data/training_testing.h5
