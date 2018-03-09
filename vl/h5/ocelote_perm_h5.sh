@@ -18,6 +18,6 @@ cp /extra/jklynch/viral-learning/training_testing.h5 /tmp
 
 python h5/perm_h5.py /tmp/training_testing.h5
 
-cp /tmp/perm_training_testing.h5 /extra/jklynch/viral-learning
+cp /tmp/perm_training_testing.h5 /extra/jklynch/viral-learning/local_perm_training_testing.h5
 
 #python h5/norm_h5.py /extra/jklynch/viral-learning/perm_training_testing.h5
