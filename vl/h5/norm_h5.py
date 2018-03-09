@@ -107,10 +107,9 @@ def normalize_datasets(input_h5_fp, norm_h5_fp):
                 n = 10000
                 for i in range(0, dset.shape[0], n):
                     j = i + n
-                    # maintain sparsity
-                    #normalized_dset[i:j, :] = (dset[i:j, :] - mean) / variance
                     t00 = time.time()
-                    normalized_dset[i:j, :] = dset[i:j, :] / variance
+                    normalized_dset[i:j, :] = (dset[i:j, :] - mean) / variance
+                    ##normalized_dset[i:j, :] = dset[i:j, :] / variance
                     print('  normalized slice {}:{} in {:5.2f}s'.format(i, j, time.time()-t00))
                 print('normalized "{}" in {:5.2f}s'.format(dset.name, time.time()-t0))
 

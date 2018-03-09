@@ -6,11 +6,13 @@
 #PBS -W group_list=bhurwitz
 #PBS -q standard
 #PBS -l select=1:ncpus=28:mem=168gb
-#PBS -l walltime=04:00:00
+#PBS -l walltime=48:00:00
 
 source activate ktf
 
 cd ~/project/viral-learning/vl
+
+export OMP_NUM_THREADS=28
 
 python h5/norm_h5.py /extra/jklynch/viral-learning/training_testing.h5
 

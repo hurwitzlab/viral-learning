@@ -39,19 +39,19 @@ The required packages can be installed in a virtual environment by the usual met
 ```
 $ python3.6 -m venv ~/venv/vl
 $ ~/venv/vl/bin/activate
-(vl) $ pip install -r keras tensorflow pandas scikit-learn
+(vl) $ pip install -r keras tensorflow matplotlib pandas scikit-learn
 ```
 
 Installation on Ocelote is similar but uses the Anaconda distribution:
 ```
-$ conda create -n vl keras tensorflow pandas scikit-learn
+$ conda create -n vl keras tensorflow matplotlib pandas scikit-learn
 ```
 
 An installation for GPU nodes on Ocelote can be created like this:
 ```
 $ qsub -I -N gpu-vl -m bea -M <your-email@address> -W group_list=bhurwitz -q standard -l select=1:ncpus=28:ngpus=1:mem=168gb -l cput=01:00:00 -l walltime=01:00:00
-$ conda create -n vlgpu pandas scikit-learn
-$ source activate vlgpu
+$ conda create -n ktfgpu h5py matplotlib pandas scikit-learn
+$ source activate ktfgpu
 $ conda install -c anaconda tensorflow-gpu
 $ conda install keras
 ```
