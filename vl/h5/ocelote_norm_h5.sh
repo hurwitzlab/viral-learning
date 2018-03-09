@@ -10,10 +10,14 @@
 
 source activate ktf
 
-cd ~/project/viral-learning/vl
-
 export OMP_NUM_THREADS=28
 
-python h5/norm_h5.py /extra/jklynch/viral-learning/training_testing.h5
+cd ~/project/viral-learning/vl
+
+cp /extra/jklynch/viral-learning/training_testing.h5 /tmp
+
+python h5/norm_h5.py /tmp/training_testing.h5
+
+cp /tmp/norm_training_testing.h5 /extra/jklynch/viral-learning
 
 #python h5/norm_h5.py /extra/jklynch/viral-learning/perm_training_testing.h5
