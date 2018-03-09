@@ -1,3 +1,10 @@
+"""
+1. Normalizing the entire dataset with mean and variance, shuffle, compression=9 runs for more than 8 hours on
+   ocelote and results in a file of more than 150GB.
+
+2. Try normalizing with only variance and without shuffle.
+"""
+
 import os.path
 import sys
 import time
