@@ -32,8 +32,7 @@ def permute_datasets(input_h5_fp, perm_h5_fp):
                     dtype=dset.dtype,
                     chunks=(1, dset.shape[1]),
                     compression='gzip',
-                    compression_opts=9,
-                    shuffle=True)
+                    compression_opts=6)
 
                 permuted_index = np.random.permutation(dset.shape[0])
 
