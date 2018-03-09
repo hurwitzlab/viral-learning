@@ -9,7 +9,7 @@
 #SBATCH --mail-type BEGIN,END,FAIL
 #SBATCH --mail-user jklynch@email.arizona.edu
 
-source activate ktf
+conda activate ktf
 
 export OMP_NUM_THREADS=48
 
