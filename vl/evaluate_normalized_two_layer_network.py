@@ -69,7 +69,7 @@ def main():
     validation_end = 900000 // 2
     test_end = 1000000 // 2
 
-    train_test_fp = '../data/training_testing.h5'
+    train_test_fp = '../data/perm_training_testing.h5'
     batch_size = 100
 
     with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file:
