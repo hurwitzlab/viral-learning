@@ -1,3 +1,5 @@
+import sys
+
 from keras.callbacks import Callback
 from keras.layers import Dense, Lambda
 from keras.models import Sequential
@@ -69,7 +71,7 @@ def main():
     validation_end = 900000 // 2
     test_end = 1000000 // 2
 
-    train_test_fp = '../data/training_testing.h5'
+    train_test_fp = sys.argv[1]  #'../data/training_testing.h5'
     batch_size = 100
 
     with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file:
@@ -86,7 +88,7 @@ def main():
         print('{} validation samples'.format(validation_samples))
         print('{} batches of validation data'.format(development_batch_count))
 
-        epochs = 2
+        epochs = int(sys.argv[2])
         print('{} epochs'.format(epochs))
 
         history = LossHistory()
@@ -113,8 +115,9 @@ def main():
             workers=2,
             callbacks=[history]
         )
+        print(history.history)
 
-        training_performance_df = pd.DataFrame(data=history.history, index=range(1, 1 + epochs * (training_samples // batch_size)))
+        training_performance_df = pd.DataFrame(data=history.history, index=range(1, epochs + 1))
         training_performance_df.index.name = 'epoch'
         plot_training_performance(training_performance_df)
 
