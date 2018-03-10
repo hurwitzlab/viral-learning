@@ -57,11 +57,20 @@ def plot_training_performance(training_performance_df):
 
 
 def main():
-    # we have 500,000 training samples
-    # 7/10 * 500,000 = 350,000
-    # 7/10 * 100,000 = 70,000
+    # we have 1,000,000 training samples
+    # training    : 8/10 * 1,000,000 = 800,000
+    # development : 1/10 * 1,000,000 = 100,000
+    # test        : 1/10 * 1,000,000 = 100,000
+
+    training_samples = 800000
+    validation_samples = 100000
+
+    training_end = 800000 // 2
+    validation_end = 900000 // 2
+    test_end = 1000000 // 2
+
     train_test_fp = '../data/training_testing.h5'
-    batch_size = 64
+    batch_size = 100
 
     with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file:
         bacteria_dset = train_test_file['/clean-bact/training1/extract/kmers']
@@ -69,16 +78,13 @@ def main():
 
         model = build_model(input_dim=bacteria_dset.shape[1])
 
-        # use 7/8 of the data for training, 1/8 for validation
-        training_sample_count = (7 * bacteria_dset.shape[0] // 10) + (7 * virus_dset.shape[0] // 10)
-        training_batches_per_epoch = training_sample_count // batch_size
-        validation_sample_count = (bacteria_dset.shape[0] // 10) + (virus_dset.shape[0] // 10)
-        validation_batch_count = validation_sample_count // batch_size
+        training_batches_per_epoch = training_samples // batch_size
+        development_batch_count = validation_samples // batch_size
         print('batch size is {}'.format(batch_size))
-        print('{} training samples'.format(training_sample_count))
+        print('{} training samples'.format(training_samples))
         print('{} batches of training data'.format(training_batches_per_epoch))
-        print('{} validation samples'.format(validation_sample_count))
-        print('{} batches of validation data'.format(validation_batch_count))
+        print('{} validation samples'.format(validation_samples))
+        print('{} batches of validation data'.format(development_batch_count))
 
         epochs = 2
         print('{} epochs'.format(epochs))
@@ -88,29 +94,27 @@ def main():
             generator=load_kmer_range_batches_h5(
                 name='training',
                 bacteria_dset=bacteria_dset,
-                bacteria_range=(0, 7 * bacteria_dset.shape[0] // 10),
+                bacteria_range=(0, training_end),
                 virus_dset=virus_dset,
-                virus_range=(0, 7 * virus_dset.shape[0] // 10),
+                virus_range=(0, training_end),
                 half_batch_size=batch_size // 2
             ),
-            # there is no advantage to permuting the validation samples
-            # and there may be a speed advantage to reading them in order
             validation_data=load_kmer_range_batches_h5(
                 name='validation',
                 bacteria_dset=bacteria_dset,
-                bacteria_range=(7 * bacteria_dset.shape[0] // 10, bacteria_dset.shape[0]),
+                bacteria_range=(training_end, validation_end),
                 virus_dset=virus_dset,
-                virus_range=(7 * virus_dset.shape[0] // 10, virus_dset.shape[0]),
+                virus_range=(training_end, validation_end),
                 half_batch_size=batch_size // 2
             ),
             epochs=epochs,
-            steps_per_epoch=(70000 // batch_size),
-            validation_steps=(30000 // batch_size),
+            steps_per_epoch=(training_samples // batch_size),
+            validation_steps=(validation_samples // batch_size),
             workers=2,
             callbacks=[history]
         )
 
-        training_performance_df = pd.DataFrame(data=history.history, index=range(1, 1 + epochs * (7 * 100000 // 10)))
+        training_performance_df = pd.DataFrame(data=history.history, index=range(1, 1 + epochs * (training_samples // batch_size)))
         training_performance_df.index.name = 'epoch'
         plot_training_performance(training_performance_df)
 
