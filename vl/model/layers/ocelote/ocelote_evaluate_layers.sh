@@ -14,10 +14,11 @@ export OMP_NUM_THREADS=28
 `pwd`
 cd ~/project/viral-learning/vl
 
-VIRAL_LEARNING_DIR=~/extra/jklynch/viral-learning
+DATA_DIR=/extra/jklynch/viral-learning
+VIRAL_LEARNING_DIR=~/project/viral-learning
 
 time python model/layers/evaluate_network_depth.py \
-    -i ${VIRAL_LEARNING_DIR}/data/perm_training_testing.h5 \
-    -o model/layers/ocelote/output_dropout.pdf \
+    -i ${DATA_DIR}/perm_training_testing.h5 \
+    -o ${VIRAL_LEARNING_DIR}/vl/model/layers/ocelote/output_dropout.pdf \
     --epoch-count 10 \
     --process-count 13
