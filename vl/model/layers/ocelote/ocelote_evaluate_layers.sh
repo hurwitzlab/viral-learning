@@ -14,7 +14,7 @@ export OMP_NUM_THREADS=28
 `pwd`
 cd ~/project/viral-learning/vl
 
-VIRAL_LEARNING_DIR=~/extra/jklynch/viral-learning/
+VIRAL_LEARNING_DIR=~/extra/jklynch/viral-learning
 
 time python model/layers/evaluate_network_depth.py \
     -i ${VIRAL_LEARNING_DIR}/data/perm_training_testing.h5 \
