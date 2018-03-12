@@ -337,14 +337,14 @@ def main():
     )
 
     # for reals
-    #training_samples = 800000
-    #validation_samples = 100000
-    #test_samples = 100000
+    training_samples = 800000
+    validation_samples = 100000
+    test_samples = 100000
 
     # quick
-    training_samples = 8000
-    validation_samples = 1000
-    test_samples = 1000
+    #training_samples = 8000
+    #validation_samples = 1000
+    #test_samples = 1000
 
     batch_size = 100
 
