@@ -43,6 +43,7 @@ def get_args():
     arg_parser.add_argument('-o', '--output-fp', required=True, help='Output file path')
     arg_parser.add_argument('-e', '--epoch-count', type=int, required=True, help='Number of epochs')
     arg_parser.add_argument('-n', '--process-count', type=int, required=True, help='Number of concurrent processes')
+    arg_parser.add_argument('-v', '--verbosity', type=int, required=True, help='0, 1, 2')
 
     args = arg_parser.parse_args()
 
@@ -221,7 +222,7 @@ def plot_training_performance_separate(training_history_list, batches_per_epoch,
             pdfpages.savefig()
 
 
-def train(train_test_fp, layers, parameters):
+def train(train_test_fp, layers, parameters, verbosity):
     # we have 1,000,000 training samples
     # training    : 8/10 * 1,000,000 = 800,000
     # development : 1/10 * 1,000,000 = 100,000
@@ -276,7 +277,7 @@ def train(train_test_fp, layers, parameters):
             validation_steps=(validation_samples // batch_size),
             workers=2,
             callbacks=[history],
-            verbose=1
+            verbose=verbosity
         )
         return model_name, history.history, time.time()-t0
 
@@ -362,7 +363,7 @@ def main():
     training_history_list = []
     with concurrent.futures.ProcessPoolExecutor(max_workers=args.process_count) as executor:
         future_to_layers = {
-            executor.submit(train, args.input_fp, layers, parameters): layers
+            executor.submit(train, args.input_fp, layers, parameters, args.verbosity): layers
             for layers
             in network_depths}
 
