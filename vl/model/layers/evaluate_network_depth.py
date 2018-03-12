@@ -6,7 +6,7 @@ import time
 
 from keras import regularizers
 from keras.callbacks import Callback
-from keras.layers import Dense, Dropout
+from keras.layers import BatchNormalization, Dense, Dropout
 from keras.models import Sequential
 
 import h5py
@@ -56,11 +56,14 @@ def build_layer(model_name, layer_type, kwargs):
             # the l2 field is a ndarray with shape ()
             # indexing with [] gives error 'too many indices'
             # the item() method is the first way I found to extract the float value from l2
-            model_name.write('_l2_{:2.1f}'.format(kwargs['kernel_regularizer'].l2.item()))
+            model_name.write('_l2_{:6.4f}'.format(kwargs['kernel_regularizer'].l2.item()))
         layer = Dense(**kwargs)
     elif layer_type == 'Dropout':
         model_name.write('_drp_{:2.1f}'.format(kwargs['rate']))
         layer = Dropout(**kwargs)
+    elif layer_type == 'BatchNormalization':
+        model_name.write('_bn')
+        layer = BatchNormalization(**kwargs)
     else:
         raise Exception()
 
@@ -273,7 +276,7 @@ def train(train_test_fp, layers, parameters):
             validation_steps=(validation_samples // batch_size),
             workers=2,
             callbacks=[history],
-            verbose=0
+            verbose=1
         )
         return model_name, history.history, time.time()-t0
 
@@ -286,61 +289,61 @@ def main():
          ('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
          ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
          ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        (('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0002)}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0002)}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0003)}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0003)}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
-         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0004)}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0004)}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
-         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0005)}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0005)}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
-         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        (('Dense', {'units': 128, 'activation': 'relu'}), ('BatchNormalization', {}),
+         ('Dense', {'units': 128, 'activation': 'relu'}), ('BatchNormalization', {}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.05)}),
-         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.05)}),
+        (('Dense', {'units': 128, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('BatchNormalization', {}),
+         ('Dense', {'units': 128, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('BatchNormalization', {}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.1)}),
-         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.1)}),
+        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}), ('BatchNormalization', {}),
+         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}), ('BatchNormalization', {}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
     )
 
     # for reals
-    training_samples = 800000
-    validation_samples = 100000
-    test_samples = 100000
+    #training_samples = 800000
+    #validation_samples = 100000
+    #test_samples = 100000
 
     # quick
-    #training_samples = 800
-    #validation_samples = 100
-    #test_samples = 100
+    training_samples = 8000
+    validation_samples = 1000
+    test_samples = 1000
 
     batch_size = 100
 

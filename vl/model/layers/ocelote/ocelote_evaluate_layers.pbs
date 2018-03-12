@@ -20,5 +20,5 @@ VIRAL_LEARNING_DIR=~/project/viral-learning
 time python ${VIRAL_LEARNING_DIR}/vl/model/layers/evaluate_network_depth.py \
     -i ${DATA_DIR}/perm_training_testing.h5 \
     -o ${VIRAL_LEARNING_DIR}/vl/model/layers/ocelote/output_dropout.pdf \
-    --epoch-count 10 \
+    --epoch-count 20 \
     --process-count 14
