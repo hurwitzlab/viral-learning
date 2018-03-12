@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+source activate ktf
 
 VIRAL_LEARNING_DIR=~/host/project/viral-learning/
 

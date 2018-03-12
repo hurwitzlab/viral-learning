@@ -4,6 +4,7 @@ import io
 import os.path
 import time
 
+from keras import regularizers
 from keras.callbacks import Callback
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
@@ -48,6 +49,24 @@ def get_args():
     return args
 
 
+def build_layer(model_name, layer_type, kwargs):
+    if layer_type == 'Dense':
+        model_name.write('_dns_{}'.format(kwargs['units']))
+        if 'kernel_regularizer' in kwargs:
+            # the l2 field is a ndarray with shape ()
+            # indexing with [] gives error 'too many indices'
+            # the item() method is the first way I found to extract the float value from l2
+            model_name.write('_l2_{:2.1f}'.format(kwargs['kernel_regularizer'].l2.item()))
+        layer = Dense(**kwargs)
+    elif layer_type == 'Dropout':
+        model_name.write('_drp_{:2.1f}'.format(kwargs['rate']))
+        layer = Dropout(**kwargs)
+    else:
+        raise Exception()
+
+    return layer
+
+
 def build_model(input_dim, layers):
     """
     Build and return a Sequential model with Dense layers given by the layers argument.
@@ -63,20 +82,18 @@ def build_model(input_dim, layers):
     model_name = io.StringIO()
     model = Sequential()
     layer_type, kwargs = layers[0]
-    model_name.write('dns_{}'.format(kwargs['units']))
-    model.add(Dense(**kwargs, input_dim=input_dim))
-    for layer_type, kwargs in layers[1:]:
-        if layer_type == 'Dense':
-            model_name.write('_dns_{}'.format(kwargs['units']))
-            model.add(Dense(**kwargs))
-        elif layer_type == 'Dropout':
-            model_name.write('_drp_{:2.1f}'.format(kwargs['rate']))
-            model.add(Dropout(**kwargs))
+    kwargs['input_dim'] = input_dim
+
+    for layer_type, kwargs in layers:
+        layer = build_layer(model_name, layer_type, kwargs)
+        model.add(layer)
 
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
-    return model_name.getvalue(), model
+
+    # trim the leading '_' from the model name - lazy!
+    return model_name.getvalue()[1:], model
 
 
 def plot_training_performance_combined(training_history_list, batches_per_epoch, epoch_count, output_fp):
@@ -178,7 +195,7 @@ def plot_training_performance_separate(training_history_list, batches_per_epoch,
                 print('validation loss column: {}'.format(loss_column))
                 plt.plot(validation_df.index, validation_df.loc[:, loss_column])
                 legend.append(loss_column)
-            plt.title('Training and Validation Loss\n{}'.format(model_name))
+            plt.title('Training and Validation Loss (val_loss: {:5.2f})\n{}'.format(validation_df.loc[:, loss_column].iloc[-1], model_name))
             plt.xlabel('batch')
             plt.ylabel('loss')
             plt.legend(legend)
@@ -194,7 +211,7 @@ def plot_training_performance_separate(training_history_list, batches_per_epoch,
                 print('validation acc column: {}'.format(acc_column))
                 plt.plot(validation_df.index, validation_df.loc[:, acc_column])
                 legend.append(acc_column)
-            plt.title('Training and Validation Accuracy\n{}'.format(model_name))
+            plt.title('Training and Validation Accuracy (val_acc: {:5.2f})\n{}'.format(validation_df.loc[:, acc_column].iloc[-1], model_name))
             plt.xlabel('batch')
             plt.ylabel('accuracy')
             plt.legend(legend)
@@ -265,37 +282,65 @@ def main():
     args = get_args()
 
     network_depths = (
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}),
-         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.3}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}),
-         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}),
-         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}),
-         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'}))
-    )
 
-    # quick
-    #training_samples = 800
-    #validation_samples = 100
-    #test_samples = 100
+        # (('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
+        #  ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
+        #  ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+        #  ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+        #  ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+        #  ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        #  ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        #  ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        #  ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        #  ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.001)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        #  ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.005)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        #  ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.01)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        #
+        # (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.05)}),
+        #  ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.05)}),
+        #  ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.1)}),
+         ('Dense', {'units': 64, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.1)}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+    )
 
     # for reals
     training_samples = 800000
     validation_samples = 100000
     test_samples = 100000
+
+    # quick
+    training_samples = 800
+    validation_samples = 100
+    test_samples = 100
 
     batch_size = 100
 
