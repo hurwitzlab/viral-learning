@@ -62,18 +62,16 @@ def build_model(input_dim, layers):
     """
     model_name = io.StringIO()
     model = Sequential()
-    layer_type, unit_count, activation = layers[0]
-    model_name.write('dns_{}'.format(unit_count))
-    model.add(Dense(unit_count, activation=activation, input_dim=input_dim))
-    for layer_type, *f in layers[1:]:
+    layer_type, kwargs = layers[0]
+    model_name.write('dns_{}'.format(kwargs['units']))
+    model.add(Dense(**kwargs, input_dim=input_dim))
+    for layer_type, kwargs in layers[1:]:
         if layer_type == 'Dense':
-            unit_count, activation = f
-            model_name.write('_dns_{}'.format(unit_count))
-            model.add(Dense(unit_count, activation=activation))
+            model_name.write('_dns_{}'.format(kwargs['units']))
+            model.add(Dense(**kwargs))
         elif layer_type == 'Dropout':
-            rate, = f
-            model_name.write('_drp_{:2.1f}'.format(rate))
-            model.add(Dropout(rate=rate))
+            model_name.write('_drp_{:2.1f}'.format(kwargs['rate']))
+            model.add(Dropout(**kwargs))
 
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
@@ -267,32 +265,26 @@ def main():
     args = get_args()
 
     network_depths = (
-        (('Dense', 64, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dense', 64, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dense', 32, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 16, 'relu'), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 8, 'relu'), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dense', 32, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dropout', 0.4), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dropout', 0.4), ('Dense', 64, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dropout', 0.3), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dropout', 0.3), ('Dense', 32, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 16, 'relu'), ('Dropout', 0.2), ('Dense', 1, 'sigmoid')),
-        (('Dense', 16, 'relu'), ('Dropout', 0.2), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 8, 'relu'), ('Dropout', 0.1), ('Dense', 1, 'sigmoid')),
-        (('Dense', 8, 'relu'), ('Dropout', 0.1), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dropout', 0.2), ('Dense', 32, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dropout', 0.2), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 64, 'relu'), ('Dropout', 0.2), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dropout', 0.1), ('Dense', 16, 'relu'), ('Dense', 1, 'sigmoid')),
-        (('Dense', 32, 'relu'), ('Dropout', 0.1), ('Dense', 8, 'relu'), ('Dense', 1, 'sigmoid'))
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}),
+         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.3}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}),
+         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}),
+         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.5}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+        (('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.7}),
+         ('Dense', {'units': 64, 'activation': 'relu'}), ('Dropout', {'rate': 0.6}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'}))
     )
 
     # quick
