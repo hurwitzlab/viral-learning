@@ -145,3 +145,37 @@ def load_kmer_range_batches_h5(name, bacteria_dset, virus_dset, bacteria_range, 
             yield return_tuple
 
         print('generator "{}" epoch {} has ended'.format(name, epoch))
+
+
+def load_validation_data_h5(name, h5_file, half_batch_size):
+
+    length_list = (100, 200, 500, 1000, 5000, 10000)
+    dset_names = ('/bact_marinePatric/extract_bact_{}/kmers', '/vir_marinePatric/extract_vir_{}/kmers')
+
+    labels = np.vstack((
+        np.zeros((half_batch_size, 1)),
+        np.ones((half_batch_size, 1))
+    ))
+
+    while True:
+        for bacteria_dset_name, virus_dset_name in [(dset_names[0].format(l), dset_names[1].format(l)) for l in length_list]:
+            bacteria_dset = h5_file[bacteria_dset_name]
+            virus_dset = h5_file[virus_dset_name]
+
+            print('loading validation data "{}" with shape {}'.format(bacteria_dset.name, bacteria_dset.shape))
+            print('loading validation data "{}" with shape {}'.format(virus_dset.name, virus_dset.shape))
+
+            half_dataset_index = min(bacteria_dset.shape[0] // 2, virus_dset.shape[0] // 2)
+
+            for n in range(0, half_dataset_index, half_batch_size):
+
+                m = n + half_batch_size
+
+                #print('loading validation data slice {}:{}'.format(n, m))
+
+                batch = np.vstack((
+                    bacteria_dset[n:m, :],
+                    virus_dset[n:m, :]
+                ))
+
+                yield (batch, labels)
