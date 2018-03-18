@@ -5,7 +5,7 @@
 #PBS -W group_list=bhurwitz
 #PBS -q standard
 #PBS -l select=1:ncpus=28:mem=168gb
-#PBS -l walltime=24:00:00
+#PBS -l walltime=12:00:00
 
 source activate ktf
 
