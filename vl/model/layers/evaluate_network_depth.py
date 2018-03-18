@@ -333,14 +333,14 @@ def main():
     )
 
     # for reals
-    training_samples = 800000
-    validation_samples = 100000
-    test_samples = 100000
+    training_samples = 1000000
+    validation_samples = 0
+    test_samples = 0
 
     # quick
-    training_samples = 8000
-    validation_samples = 1000
-    test_samples = 1000
+    #training_samples = 8000
+    #validation_samples = 1000
+    #test_samples = 1000
 
     batch_size = 100
 
@@ -361,7 +361,7 @@ def main():
         future_to_layers = {
             executor.submit(train, args.input_fp, layers, parameters, args.verbosity): layers
             for layers
-            in network_depths[:2]}
+            in network_depths}
 
         for future in concurrent.futures.as_completed(future_to_layers):
             layers = future_to_layers[future]
