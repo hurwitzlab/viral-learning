@@ -4,7 +4,6 @@ import io
 import os.path
 import time
 
-from keras import regularizers
 from keras.callbacks import Callback
 from keras.layers import BatchNormalization, Dense, Dropout
 from keras.models import Sequential
@@ -12,10 +11,11 @@ from keras.models import Sequential
 import h5py
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 plt.switch_backend('agg')
 import pandas as pd
 
-from vl.data import load_kmer_range_batches_h5
+from vl.data import load_kmer_range_batches_h5, load_validation_data_h5
 
 
 class LossHistory(Callback):
@@ -100,7 +100,7 @@ def build_model(input_dim, layers):
     return model_name.getvalue()[1:], model
 
 
-def plot_training_performance_combined(training_history_list, batches_per_epoch, epoch_count, output_fp):
+def write_training_history(training_history_list, batches_per_epoch, epoch_count, output_fp):
     # generate network-specific accuracy and loss keys
     training_accuracy_loss = {}
     validation_accuracy_loss = {}
@@ -113,49 +113,12 @@ def plot_training_performance_combined(training_history_list, batches_per_epoch,
     training_df = pd.DataFrame(data=training_accuracy_loss, index=[b+1 for b in range(epoch_count*batches_per_epoch)])
     training_df.index.name = 'batch'
 
-    training_df.to_csv(path_or_buf='training_accuracy_loss.tab', sep='\t')
+    training_df.to_csv(path_or_buf='training_accuracy_loss.tab.gz', sep='\t', compression='gzip')
 
     validation_df = pd.DataFrame(data=validation_accuracy_loss, index=[(e+1) * batches_per_epoch for e in range(epoch_count)])
     validation_df.index.name = 'batch'
 
-    validation_df.to_csv(path_or_buf='validation_accuracy_loss.tab', sep='\t')
-
-    output_dp, output_filename = os.path.split(output_fp)
-    output_basename, output_ext = os.path.splitext(output_filename)
-
-    combined_plots_fp = os.path.join(output_dp, output_basename + '_combined' + output_ext)
-    with PdfPages(combined_plots_fp) as pdfpages:
-        plt.figure()
-        legend = []
-        for loss_column in [column for column in training_df.columns if 'loss' in column]:
-            print('training loss column: {}'.format(loss_column))
-            plt.plot(training_df.index, training_df.loc[:, loss_column])
-            legend.append(loss_column)
-        for loss_column in [column for column in validation_df.columns if 'loss' in column]:
-            print('validation loss column: {}'.format(loss_column))
-            plt.plot(validation_df.index, validation_df.loc[:, loss_column])
-            legend.append(loss_column)
-        plt.title('Training and Validation Loss')
-        plt.xlabel('batch')
-        plt.ylabel('loss')
-        plt.legend(legend)
-        pdfpages.savefig()
-
-        plt.figure()
-        legend = []
-        for acc_column in [column for column in training_df.columns if 'acc' in column]:
-            print('training acc column: {}'.format(acc_column))
-            plt.plot(training_df.index, training_df.loc[:, acc_column])
-            legend.append(acc_column)
-        for acc_column in [column for column in validation_df.columns if 'acc' in column]:
-            print('validation acc column: {}'.format(acc_column))
-            plt.plot(validation_df.index, validation_df.loc[:, acc_column])
-            legend.append(acc_column)
-        plt.title('Training and Validation Accuracy')
-        plt.xlabel('batch')
-        plt.ylabel('accuracy')
-        plt.legend(legend)
-        pdfpages.savefig()
+    validation_df.to_csv(path_or_buf='validation_accuracy_loss.tab.gz', sep='\t', compression='gzip')
 
 
 def plot_training_performance_separate(training_history_list, batches_per_epoch, epoch_count, output_fp):
@@ -165,8 +128,10 @@ def plot_training_performance_separate(training_history_list, batches_per_epoch,
 
     separate_plots_fp = os.path.join(output_dp, output_basename + '_separate' + output_ext)
 
+    sorted_training_history_list = sorted(training_history_list, key=lambda h: h[2]['val_acc'][-1], reverse=True)
+
     with PdfPages(separate_plots_fp) as pdfpages:
-        for model_name, layers, history, t in training_history_list:
+        for model_name, layers, history, t in sorted_training_history_list:
             training_accuracy_loss = {}
             validation_accuracy_loss = {}
 
@@ -180,45 +145,45 @@ def plot_training_performance_separate(training_history_list, batches_per_epoch,
                 index=[b + 1 for b in range(epoch_count * batches_per_epoch)])
             training_df.index.name = 'batch'
 
-            #training_df.to_csv(path_or_buf='training_accuracy_loss.tab', sep='\t')
-
             validation_df = pd.DataFrame(
                 data=validation_accuracy_loss,
                 index=[(e + 1) * batches_per_epoch for e in range(epoch_count)])
             validation_df.index.name = 'batch'
 
-            #validation_df.to_csv(path_or_buf='validation_accuracy_loss.tab', sep='\t')
-
-            plt.figure()
+            fig, ax1 = plt.subplots()
             legend = []
-            for loss_column in [column for column in training_df.columns if 'loss' in column]:
+            for loss_column in [column for column in training_df.columns if 'loss' in column and model_name in column]:
                 print('training loss column: {}'.format(loss_column))
-                plt.plot(training_df.index, training_df.loc[:, loss_column])
-                legend.append(loss_column)
-            for loss_column in [column for column in validation_df.columns if 'loss' in column]:
+                ax1.plot(training_df.index, training_df.loc[:, loss_column], color='tab:blue', alpha=0.8)
+                legend.append('loss')
+            for loss_column in [column for column in validation_df.columns if
+                                'loss' in column and model_name in column]:
                 print('validation loss column: {}'.format(loss_column))
-                plt.plot(validation_df.index, validation_df.loc[:, loss_column])
-                legend.append(loss_column)
-            plt.title('Training and Validation Loss (val_loss: {:5.2f})\n{}'.format(validation_df.loc[:, loss_column].iloc[-1], model_name))
-            plt.xlabel('batch')
-            plt.ylabel('loss')
-            plt.legend(legend)
-            pdfpages.savefig()
+                ax1.plot(validation_df.index, validation_df.loc[:, loss_column], color='tab:orange', alpha=0.8)
+                legend.append('val_loss')
+            ax1.set_xlabel('epoch')
+            tick_spacing = batches_per_epoch
+            ax1.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+            ax1.set_xticklabels([0] + list(range(epoch_count+1)))
+            ax1.set_ylabel('loss')
+            ax1.legend(legend, loc=3)
 
-            plt.figure()
+            ax2 = ax1.twinx()
             legend = []
-            for acc_column in [column for column in training_df.columns if 'acc' in column]:
+            for acc_column in [column for column in training_df.columns if 'acc' in column and model_name in column]:
                 print('training acc column: {}'.format(acc_column))
-                plt.plot(training_df.index, training_df.loc[:, acc_column])
-                legend.append(acc_column)
-            for acc_column in [column for column in validation_df.columns if 'acc' in column]:
-                print('validation acc column: {}'.format(acc_column))
-                plt.plot(validation_df.index, validation_df.loc[:, acc_column])
-                legend.append(acc_column)
-            plt.title('Training and Validation Accuracy (val_acc: {:5.2f})\n{}'.format(validation_df.loc[:, acc_column].iloc[-1], model_name))
-            plt.xlabel('batch')
-            plt.ylabel('accuracy')
-            plt.legend(legend)
+                ax2.plot(training_df.index, training_df.loc[:, acc_column], color='tab:purple', alpha=0.8)
+                legend.append('acc')
+            for val_acc_column in [column for column in validation_df.columns if 'acc' in column and model_name in column]:
+                print('validation acc column: {}'.format(val_acc_column))
+                ax2.plot(validation_df.index, validation_df.loc[:, val_acc_column], color='xkcd:dark yellow', alpha=0.8)
+                legend.append('val_acc')
+            ax2.set_title('Training and Validation (val_acc: {:5.2f})\n{}'.format(validation_df.loc[:, val_acc_column].iloc[-1], model_name))
+            ax2.set_ylim(0.0, 1.0)
+            ax2.set_ylabel('accuracy')
+            print(legend)
+            ax2.legend(legend, loc=7)
+
             pdfpages.savefig()
 
 
@@ -264,17 +229,23 @@ def train(train_test_fp, layers, parameters, verbosity):
                 virus_range=(0, training_end),
                 half_batch_size=batch_size // 2
             ),
-            validation_data=load_kmer_range_batches_h5(
+            #validation_data=load_kmer_range_batches_h5(
+            #    name='validation',
+            #    bacteria_dset=bacteria_dset,
+            #    bacteria_range=(training_end, validation_end),
+            #    virus_dset=virus_dset,
+            #    virus_range=(training_end, validation_end),
+            #    half_batch_size=batch_size // 2
+            #),
+            validation_data=load_validation_data_h5(
                 name='validation',
-                bacteria_dset=bacteria_dset,
-                bacteria_range=(training_end, validation_end),
-                virus_dset=virus_dset,
-                virus_range=(training_end, validation_end),
+                h5_file=train_test_file,
                 half_batch_size=batch_size // 2
             ),
             epochs=epochs,
             steps_per_epoch=(training_samples // batch_size),
-            validation_steps=(validation_samples // batch_size),
+            #validation_steps=(validation_samples // batch_size),
+            validation_steps=(((5000 * 4) + (4900 * 2)) // batch_size),
             workers=2,
             callbacks=[history],
             verbose=verbosity
@@ -287,52 +258,77 @@ def main():
 
     network_depths = (
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.35}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.40}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.4}), ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}),
+         ('Dropout', {'rate': 0.45}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0002)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0002)}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.50}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0003)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0003)}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.55}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0004)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0004)}),
+         (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.60}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0005)}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0005)}),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.35}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.35}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu'}), ('BatchNormalization', {}),
-         ('Dense', {'units': 128, 'activation': 'relu'}), ('BatchNormalization', {}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.40}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.40}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('BatchNormalization', {}),
-         ('Dense', {'units': 128, 'activation': 'relu'}), ('Dropout', {'rate': 0.4}), ('BatchNormalization', {}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.45}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.45}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
-        (('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}), ('BatchNormalization', {}),
-         ('Dense', {'units': 128, 'activation': 'relu', 'kernel_regularizer': regularizers.l2(0.0001)}), ('BatchNormalization', {}),
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.50}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.50}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.55}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.55}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.60}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.60}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'}))
 
     )
 
@@ -342,9 +338,9 @@ def main():
     test_samples = 100000
 
     # quick
-    #training_samples = 8000
-    #validation_samples = 1000
-    #test_samples = 1000
+    training_samples = 8000
+    validation_samples = 1000
+    test_samples = 1000
 
     batch_size = 100
 
@@ -365,7 +361,7 @@ def main():
         future_to_layers = {
             executor.submit(train, args.input_fp, layers, parameters, args.verbosity): layers
             for layers
-            in network_depths}
+            in network_depths[:2]}
 
         for future in concurrent.futures.as_completed(future_to_layers):
             layers = future_to_layers[future]
@@ -377,7 +373,7 @@ def main():
             else:
                 training_history_list.append((model_name, layers, training_history, t))
 
-        plot_training_performance_combined(
+        write_training_history(
             training_history_list=training_history_list,
             batches_per_epoch=parameters['batches_per_epoch'],
             epoch_count=args.epoch_count,
