@@ -60,7 +60,7 @@ def build_layer(model_name, layer_type, kwargs):
             model_name.write('_l2_{:6.4f}'.format(kwargs['kernel_regularizer'].l2.item()))
         layer = Dense(**kwargs)
     elif layer_type == 'Dropout':
-        model_name.write('_drp_{:2.1f}'.format(kwargs['rate']))
+        model_name.write('_drp_{:3.2f}'.format(kwargs['rate']))
         layer = Dropout(**kwargs)
     elif layer_type == 'BatchNormalization':
         model_name.write('_bn')
@@ -258,78 +258,94 @@ def main():
 
     network_depths = (
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.35}),
+         ('Dropout', {'rate': 0.05}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.40}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.45}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.50}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-        (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.55}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.60}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
-
-
-        (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.35}),
-         ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.35}),
+         ('Dropout', {'rate': 0.05}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.40}),
+         ('Dropout', {'rate': 0.10}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.40}),
+         ('Dropout', {'rate': 0.10}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.45}),
+         ('Dropout', {'rate': 0.15}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.45}),
+         ('Dropout', {'rate': 0.15}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.50}),
+         ('Dropout', {'rate': 0.20}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.50}),
+         ('Dropout', {'rate': 0.20}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.55}),
+         ('Dropout', {'rate': 0.25}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.55}),
+         ('Dropout', {'rate': 0.25}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
 
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.60}),
+         ('Dropout', {'rate': 0.30}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.60}),
+         ('Dropout', {'rate': 0.30}),
          ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.05}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.05}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.05}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.10}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.10}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.10}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.15}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.15}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.15}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.20}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.20}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.20}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.25}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.25}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.25}),
+         ('Dense', {'units': 1, 'activation': 'sigmoid'})),
+
+        (('Dense', {'units': 128, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.30}),
+         ('Dense', {'units': 64, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.30}),
+         ('Dense', {'units': 32, 'activation': 'relu'}),
+         ('Dropout', {'rate': 0.30}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'}))
-
     )
 
     # for reals
