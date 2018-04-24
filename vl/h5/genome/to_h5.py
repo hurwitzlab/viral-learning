@@ -24,7 +24,7 @@ def create_dataset(h5_file, name, shape):
     dset = h5_file.create_dataset(
         name,
         shape,
-        maxshape=maxshape,
+        maxshape=(None, shape[1]),
         # I tried np.float32 to save space but very little space was saved
         # 139MB vs 167MB for 5000 rows?
         dtype=np.float64,
