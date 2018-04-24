@@ -3,24 +3,28 @@ Read Alise's training and testing data files and smash them all into one H5 file
 
 This script is hard-coded to run on ocelote.
 """
-import glob
+import itertools
 import os
-import sys
 import time
 
 import h5py
 import numpy as np
 
 
-data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read'
-data_target_fp = '/extra/jklynch/viral-learning/training_testing.h5'
+# 500, 1000, 5000pb
+# Phage, Proc
+# 4, 6, 8 mers
+# kmer_file1.fasta.tab, kmer_file2.fasta.tab, ..., kmer_file10.fasta.tab
+data_file_path_tmpl = '/rsgrps/bhurwitz/alise/my_data/Riveal_exp/Models/RefSeq_based_models/Prok_Phages_models/size_{}pb/training_set/{}_trainingset/extract_kmers/kmers{}/kmer_file{}.fasta.tab'
+
+output_file_path_tmpl = '/extra/jklynch/viral-learning/riveal_refseq_prok_phage_{}pb_kmers{}.h5'
 
 
 def create_dataset(h5_file, name, shape):
     dset = h5_file.create_dataset(
         name,
         shape,
-        maxshape=(None, shape[1]),
+        maxshape=maxshape,
         # I tried np.float32 to save space but very little space was saved
         # 139MB vs 167MB for 5000 rows?
         dtype=np.float64,
@@ -32,60 +36,48 @@ def create_dataset(h5_file, name, shape):
 
 
 def write_all_training_and_testing_data():
-    h5_fp = data_target_fp
-    with h5py.File(h5_fp, 'w') as h5_file:
-        training_line_count = int(sys.argv[1])
-        column_count = 32768
+    for pb, k in itertools.product((500, 1000, 5000), (4, 6, 8)):
 
-        read_tsv_write_h5_group(
-            tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-bact/training1/extract/kmers/kmer_file*.fasta.tab'))),
-            dset=create_dataset(
-                h5_file,
-                name='/clean-bact/training1/extract/kmers',
-                shape=(training_line_count, column_count)),
-            chunksize=10000)
+        h5_fp = output_file_path_tmpl.format(pb, k)
+        print('writing file {}'.format(h5_fp))
+        with h5py.File(h5_fp, 'w') as h5_file:
 
-        read_tsv_write_h5_group(
-            tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'contigs_training/set/cleanSet_Centrifuge/clean-vir/training1/extract/kmers/kmer_file*.fasta.tab'))),
-            dset=create_dataset(h5_file, name='/clean-vir/training1/extract/kmers', shape=(training_line_count, column_count)),
-            chunksize=10000)
+            # read the first line of one file to get the number of columns
+            # header lines look like this:
+            #   seq_id  AAAA    AAAT    AAAG    AAAC    AATA    AATT ... GCCG    GCCC    read_type
+            with open(data_file_path_tmpl.format(pb, 'Phage', k, 1)) as data_file:
+                headers = data_file.readline().strip().split('\t')
+                kmer_count = len(headers) - 2
 
-        for read_length in (100, 200, 500, 1000, 5000, 10000):
-            read_tsv_write_h5_group(
-                tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/bact_marinePatric/extract_bact_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
-                dset=create_dataset(
-                    h5_file,
-                    name='/bact_marinePatric/extract_bact_{}/kmers'.format(read_length),
-                    shape=(training_line_count, column_count)),
-                chunksize=5000)
+            for organism in ('Phage', 'Proc'):
+                # dataset names look like /Phage/500pb/kmers4
+                dset_name = '/{}/{}pb/kmers{}'.format(organism, pb, k)
+                dset = create_dataset(h5_file, dset_name, shape=(10 * 10000, kmer_count))
 
-        for read_length in (100, 200, 500, 1000, 5000, 10000):
-            read_tsv_write_h5_group(
-                tsv_fp_list=sorted(glob.glob(os.path.join(data_source_dir, 'eval_set/vir_marinzPatric/extract_vir_{}/kmers/kmer_file*.fasta.tab'.format(read_length)))),
-                dset=create_dataset(
-                    h5_file,
-                    name='/vir_marinePatric/extract_vir_{}/kmers'.format(read_length),
-                    shape=(training_line_count, column_count)),
-                chunksize=5000)
-
-        print('finished writing {} in {:5.2f}s'.format(h5_fp, time.time() - t0))
-        print('  file size is {:5.2f}MB'.format(os.path.getsize(h5_fp) / 1e6))
+                file_list = [data_file_path_tmpl.format(pb, organism, k, n+1) for n in range(10)]
+                read_tsv_write_h5_group(file_list, dset, chunksize=1000)
+            print('finished writing {} in {:5.2f}s'.format(h5_fp, time.time() - t0))
+            print('  file size is {:5.2f}MB'.format(os.path.getsize(h5_fp) / 1e6))
 
 
 def read_chunk(f_, shape):
+    seq_ids = []
     chunk_ = np.zeros(shape)
     chunk_i = 0
     for line in f_:
-        chunk_[chunk_i, :] = [float(f) for f in line.rstrip().split('\t')[1:-1]]
+        row_elements = line.rstrip().split('\t')
+        seq_ids.append(row_elements[0])
+        chunk_[chunk_i, :] = [float(f) for f in row_elements[1:-1]]
         chunk_i += 1
         if chunk_i == shape[0]:
             # end of a chunk!
-            yield chunk_
+            yield seq_ids, chunk_
             chunk_i = 0
+            seq_ids = []
 
     if chunk_i > 0:
         # yield a partial chunk
-        yield chunk_[:chunk_i, :]
+        yield seq_ids, chunk_[:chunk_i, :]
 
 
 def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
@@ -103,7 +95,7 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
             print('  header has {} columns'.format(column_count))
 
             t00 = time.time()
-            for i, chunk in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
+            for i, seq_ids, chunk in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
                 t11 = time.time()
                 sj = si + chunk.shape[0]
                 print('read chunk {} with shape {} in {:5.2f}s ({} rows total)'.format(
@@ -131,4 +123,4 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
 
 t0 = time.time()
 write_all_training_and_testing_data()
-print('wrote all training and testing data in {:5.2f}s to {}'.format(time.time()-t0, data_target_fp))
+print('Done in {:5.2f}s.'.format(time.time()-t0))
