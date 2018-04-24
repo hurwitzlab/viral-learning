@@ -193,7 +193,6 @@ def train(train_test_fp, layers, parameters, verbosity):
     # development : 1/10 * 1,000,000 = 100,000
     # test        : 1/10 * 1,000,000 = 100,000
 
-
     with h5py.File(train_test_fp, 'r', libver='latest', swmr=True) as train_test_file:
         bacteria_dset = train_test_file['/clean-bact/training1/extract/kmers']
         virus_dset = train_test_file['/clean-vir/training1/extract/kmers']

@@ -15,6 +15,7 @@ import numpy as np
 data_source_dir = '/rsgrps/bhurwitz/alise/my_data/Machine_learning/size_read'
 data_target_fp = '/extra/jklynch/viral-learning/training_testing.h5'
 
+
 def create_dataset(h5_file, name, shape):
     dset = h5_file.create_dataset(
         name,
@@ -28,6 +29,7 @@ def create_dataset(h5_file, name, shape):
         compression='gzip')
 
     return dset
+
 
 def write_all_training_and_testing_data():
     h5_fp = data_target_fp
