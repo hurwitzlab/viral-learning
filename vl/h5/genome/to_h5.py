@@ -86,34 +86,36 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
     si = 0
     sj = 0
     for i, fp in enumerate(tsv_fp_list):
-        print('reading "{}"'.format(fp))
-        with open(fp, 'rt') as f:
-            print('reading "{}" with size {:5.2f}MB'.format(fp, os.path.getsize(fp) / 1e6))
-            header_line = f.readline()
-            print('  header : "{}"'.format(header_line[:30]))
-            column_count = len(header_line.strip().split('\t'))
-            print('  header has {} columns'.format(column_count))
+        if not os.path.exists(fp):
+            print('WARNING: file "{}" does not exist')
+        else:
+            with open(fp, 'rt') as f:
+                print('reading "{}" with size {:5.2f}MB'.format(fp, os.path.getsize(fp) / 1e6))
+                header_line = f.readline()
+                print('  header : "{}"'.format(header_line[:30]))
+                column_count = len(header_line.strip().split('\t'))
+                print('  header has {} columns'.format(column_count))
 
-            t00 = time.time()
-            for i, (seq_ids, chunk) in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
-                t11 = time.time()
-                sj = si + chunk.shape[0]
-                print('read chunk {} with shape {} in {:5.2f}s ({} rows total)'.format(
-                    i, chunk.shape, t11 - t00, sj))
-                dset[si:sj, :] = chunk
-                si = sj
                 t00 = time.time()
-                print('  wrote chunk in {:5.2f}s'.format(t00 - t11))
+                for i, (seq_ids, chunk) in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
+                    t11 = time.time()
+                    sj = si + chunk.shape[0]
+                    print('read chunk {} with shape {} in {:5.2f}s ({} rows total)'.format(
+                        i, chunk.shape, t11 - t00, sj))
+                    dset[si:sj, :] = chunk
+                    si = sj
+                    t00 = time.time()
+                    print('  wrote chunk in {:5.2f}s'.format(t00 - t11))
 
+                    if sj >= dset.shape[0]:
+                        print('dataset {} is full'.format(dset.name))
+                        break
+    
                 if sj >= dset.shape[0]:
                     print('dataset {} is full'.format(dset.name))
                     break
 
-            if sj >= dset.shape[0]:
-                print('dataset {} is full'.format(dset.name))
-                break
-
-    print('read {} rows'.format(si))
+    print('read {} rows in {:5.2f}s'.format(si, time.time()-t0))
     print('dataset "{}" has shape {}'.format(dset.name, dset.shape))
     if sj < dset.shape[0]:
         new_shape = (sj, dset.shape[1])
