@@ -87,7 +87,7 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
     sj = 0
     for i, fp in enumerate(tsv_fp_list):
         if not os.path.exists(fp):
-            print('WARNING: file "{}" does not exist')
+            print('WARNING: file "{}" does not exist'.format(fp))
         else:
             with open(fp, 'rt') as f:
                 print('reading "{}" with size {:5.2f}MB'.format(fp, os.path.getsize(fp) / 1e6))
@@ -110,7 +110,7 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
                     if sj >= dset.shape[0]:
                         print('dataset {} is full'.format(dset.name))
                         break
-    
+
                 if sj >= dset.shape[0]:
                     print('dataset {} is full'.format(dset.name))
                     break
@@ -123,6 +123,6 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
         dset.resize(new_shape)
 
 
-t0 = time.time()
+t0_ = time.time()
 write_all_training_and_testing_data()
-print('Done in {:5.2f}s.'.format(time.time()-t0))
+print('Done in {:5.2f}s.'.format(time.time()-t0_))
