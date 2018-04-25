@@ -37,6 +37,7 @@ def create_dataset(h5_file, name, shape):
 
 def write_all_training_and_testing_data():
     for pb, k in itertools.product((500, 1000, 5000), (4, 6, 8)):
+        t0 = time.time()
 
         h5_fp = output_file_path_tmpl.format(pb, k)
         print('writing file {}'.format(h5_fp))
