@@ -98,11 +98,11 @@ def read_tsv_write_h5_group(tsv_fp_list, dset, chunksize):
                 print('  header has {} columns'.format(column_count))
 
                 t00 = time.time()
-                for i, (seq_ids, chunk) in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
+                for j, (seq_ids, chunk) in enumerate(read_chunk(f, shape=(chunksize, dset.shape[1]))):
                     t11 = time.time()
                     sj = si + chunk.shape[0]
                     print('read chunk {} with shape {} in {:5.2f}s ({} rows total)'.format(
-                        i, chunk.shape, t11 - t00, sj))
+                        j, chunk.shape, t11 - t00, sj))
                     dset[si:sj, :] = chunk
                     si = sj
                     t00 = time.time()
