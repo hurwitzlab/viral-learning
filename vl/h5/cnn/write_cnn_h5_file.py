@@ -117,7 +117,7 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
     # they may not be equal
     i = 0
     t0 = time.time()
-    for r, record in enumerate(itertools.islice(SeqIO.parse(fasta_fp, "fasta"), stop=im_width)):
+    for r, record in enumerate(itertools.islice(SeqIO.parse(fasta_fp, "fasta"), im_limit)):
         if len(record.seq) != seq_length:
             print('{} record.seq length: {} != {}'.format(r, len(record.seq), seq_length))
         else:
@@ -128,7 +128,7 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
             i += 1
 
         if (i + 1) % 100 == 0:
-            print('finished 100 records in {:5.2f}s'.format(r, time.time() - t0))
+            print('finished 100 records in {:5.2f}s'.format(i, time.time() - t0))
             t0 = time.time()
 
     # return the number of images written to dset
