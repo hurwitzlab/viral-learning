@@ -169,6 +169,8 @@ def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_wi
             fasta_fp=phage_fp,
             im_limit=image_limit)
 
+        print('wrote {} image sequences to dataset {}'.format(i, phage_dset.name))
+
         # resize the data set
         (s, m, n, c) = phage_dset.shape
         phage_dset.resize((i, m, n, c))
@@ -184,6 +186,8 @@ def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_wi
             dset=prok_dset,
             fasta_fp=prok_fp,
             im_limit=image_limit)
+
+        print('wrote {} image sequences to dataset {}'.format(i, prok_dset.name))
 
         # resize the data set
         (s, m, n, c) = prok_dset.shape
