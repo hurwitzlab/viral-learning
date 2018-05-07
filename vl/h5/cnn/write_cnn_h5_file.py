@@ -16,9 +16,9 @@ def cli():
                             help='path to prokaryote FASTA file')
     arg_parser.add_argument('--output-h5-fp', required=True,
                             help='path to output H5 file')
-    arg_parser.add_argument('--image-width', required=True,
+    arg_parser.add_argument('--image-width', type=int, required=True,
                             help='sequence image width in nucleotides')
-    arg_parser.add_argument('--image-limit', required=False, default=None,
+    arg_parser.add_argument('--image-limit', type=int, required=False, default=None,
                             help='optional limit on output images')
 
     args = arg_parser.parse_args()
