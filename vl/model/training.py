@@ -109,11 +109,12 @@ def build_layer(model_name, layer_type, kwargs):
     return layer
 
 
-def build_model(input_dim, layers):
+def build_model(model, layers, input_dim=None):
     """
     Build and return a Sequential model with Dense layers given by the layers argument.
 
     Arguments
+        model      (keras.Sequential) model to which layers will be added
         input_dim  (int) dimension of input
         layers     (tuple) sequence of 2-ples, one per layer, such as ((64, 'relu'), (64, 'relu'), (1, 'sigmoid'))
 
@@ -122,9 +123,12 @@ def build_model(input_dim, layers):
         model      (Model) a compiled model
     """
     model_name = io.StringIO()
-    model = Sequential()
+    #model = Sequential()
     layer_type, kwargs = layers[0]
-    kwargs['input_dim'] = input_dim
+    if input_dim is None:
+        pass
+    else:
+        kwargs['input_dim'] = input_dim
 
     for layer_type, kwargs in layers:
         layer = build_layer(model_name, layer_type, kwargs)
