@@ -139,7 +139,7 @@ def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_wi
     phage_seq_count = count_fasta_sequences(fasta_fp=phage_fp)
     print('{} sequences in file "{}"'.format(phage_seq_count, phage_fp))
 
-    prok_seq_count = count_fasta_sequences(fasta_fp=input_prokaryote_fasta_fp)
+    prok_seq_count = count_fasta_sequences(fasta_fp=prok_fp)
     print('{} sequences in file "{}"'.format(prok_seq_count, prok_fp))
 
     # phage_prok_pair_count = min(phage_seq_count, prok_seq_count)
