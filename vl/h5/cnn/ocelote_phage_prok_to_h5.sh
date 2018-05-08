@@ -14,7 +14,7 @@ cd ~/project/viral-learning
 
 python vl/h5/cnn/write_cnn_h5_file.py \
     --phage-fp /rsgrps/bhurwitz/alise/my_data/Riveal_exp/Models/RefSeq_based_models/Prok_Phages_models/size_500pb/training_set/Phage_trainingset/phage500_training_set.fa \
-    --prok-fp /rsgrps/bhurwitz/alise/my_data/Riveal_exp/Models/RefSeq_based_models/Prok_Phages_models/size_500pb/training_set/Proc_trainingset/proc500_training_set.fa \
+    --prok-fp /rsgrps/bhurwitz/alise/my_data/Riveal_exp/Models/RefSeq_based_models/Prok_Phages_models/size_500pb/training_set/Proc_trainingset/proc500_training_set.fasta \
     --output-h5-fp /extra/jklynch/phage_prok_500.h5 \
     --image-width 100 \
     --image-limit 100000 &
