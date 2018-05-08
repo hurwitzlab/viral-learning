@@ -191,7 +191,7 @@ def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_wi
 
         # resize the data set
         (s, m, n, c) = prok_dset.shape
-        phage_dset.resize((i, m, n, c))
+        prok_dset.resize((i, m, n, c))
 
 
 if __name__ == '__main__':
