@@ -1,4 +1,5 @@
 import argparse
+import collections
 import itertools
 import os.path
 import time
@@ -36,6 +37,21 @@ def count_fasta_sequences(fasta_fp):
             else:
                 pass
     return seq_count
+
+
+def count_fasta_sequences_and_letters(fasta_fp):
+    t0 = time.time()
+
+    seq_counter = 0
+    letter_counter = collections.Counter()
+
+    for record in SeqIO.parse(fasta_fp, "fasta"):
+        seq_counter += 1
+        letter_counter.update(str(record.seq))
+
+    print('{:5.2f}s to count sequences in {}'.format(time.time()-t0, fasta_fp))
+
+    return seq_counter, letter_counter
 
 
 def first_fasta_sequence_length(fasta_fp):
@@ -136,11 +152,13 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
 
 
 def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_width, image_limit=None):
-    phage_seq_count = count_fasta_sequences(fasta_fp=phage_fp)
+    phage_seq_count, phage_letter_counter = count_fasta_sequences_and_letters(fasta_fp=phage_fp)
     print('{} sequences in file "{}"'.format(phage_seq_count, phage_fp))
+    print('  {}'.format(phage_letter_counter))
 
-    prok_seq_count = count_fasta_sequences(fasta_fp=prok_fp)
+    prok_seq_count, prok_letter_counter = count_fasta_sequences_and_letters(fasta_fp=prok_fp)
     print('{} sequences in file "{}"'.format(prok_seq_count, prok_fp))
+    print('  {}'.format(prok_letter_counter))
 
     # phage_prok_pair_count = min(phage_seq_count, prok_seq_count)
     # print('allocating space for {} phage-prokaryote pairs'.format(phage_prok_pair_count))
