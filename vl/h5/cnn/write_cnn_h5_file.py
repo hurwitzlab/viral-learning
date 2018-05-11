@@ -21,6 +21,8 @@ def cli():
                             help='sequence image width in nucleotides')
     arg_parser.add_argument('--image-limit', type=int, required=False, default=None,
                             help='optional limit on output images')
+    arg_parser.add_argument('--counts', type=bool, required=False, default=False,
+                            help='optionally count sequences and nucleotides - WARNING this takes a long time')
 
     args = arg_parser.parse_args()
     print('command line arguments:\n{}'.format(args))
@@ -29,6 +31,7 @@ def cli():
 
 
 def count_fasta_sequences(fasta_fp):
+    t0 = time.time()
     seq_count = 0
     with open(fasta_fp, 'rt') as phage_file:
         for line in phage_file:
@@ -36,6 +39,8 @@ def count_fasta_sequences(fasta_fp):
                 seq_count += 1
             else:
                 pass
+    print('{:5.2f}s to count sequences in {}'.format(time.time()-t0, fasta_fp))
+
     return seq_count
 
 
@@ -49,7 +54,7 @@ def count_fasta_sequences_and_letters(fasta_fp):
         seq_counter += 1
         letter_counter.update(str(record.seq))
 
-    print('{:5.2f}s to count sequences in {}'.format(time.time()-t0, fasta_fp))
+    print('{:5.2f}s to count sequences and nucleotides in {}'.format(time.time()-t0, fasta_fp))
 
     return seq_counter, letter_counter
 
@@ -62,10 +67,10 @@ def first_fasta_sequence_length(fasta_fp):
 def create_dataset(h5_file, dset_name, sample_count, sequence_length, im_width):
     return h5_file.create_dataset(
         name=dset_name,
-        shape=(sample_count, sequence_length - im_width + 1, im_width, 5),
-        maxshape=(None, sequence_length - im_width + 1, im_width, 5),
+        shape=(sample_count, sequence_length - im_width + 1, im_width, 4),
+        maxshape=(None, sequence_length - im_width + 1, im_width, 4),
         dtype=np.float64,
-        chunks=(1, sequence_length - im_width + 1, im_width, 5),
+        chunks=(1, sequence_length - im_width + 1, im_width, 4),
         compression='gzip',
         compression_opts=9)
 
@@ -86,26 +91,34 @@ def get_2D_sequence(seq, start_stop_indices):
     return seq_2d
 
 
+# nucleotide_to_channels = {
+#     'A':[1.00, 0.00, 0.00, 0.00, 0.00],
+#     'C':[0.00, 1.00, 0.00, 0.00, 0.00],
+#     'G':[0.00, 0.00, 1.00, 0.00, 0.00],
+#     'T':[0.00, 0.00, 0.00, 1.00, 0.00],
+#     'U':[0.00, 0.00, 0.00, 0.00, 0.00],
+#     'N':[0.20, 0.20, 0.20, 0.20, 0.20],
+#     'R':[0.50, 0.00, 0.50, 0.00, 0.00],
+#     'M':[0.50, 0.50, 0.00, 0.00, 0.00], # A or C
+#     'S':[0.00, 0.50, 0.50, 0.00, 0.00], # C or G
+#     'K':[0.00, 0.00, 0.333, 0.333, 0.333], # G, T, or U
+#     'W':[0.333, 0.00, 0.00, 0.333, 0.333], # A, T, or U
+#     'Y':[0.00, 0.333, 0.00, 0.333, 0.333]} # C, T, ur U
+
+
 nucleotide_to_channels = {
-    'A':[1.00, 0.00, 0.00, 0.00, 0.00],
-    'C':[0.00, 1.00, 0.00, 0.00, 0.00],
-    'G':[0.00, 0.00, 1.00, 0.00, 0.00],
-    'T':[0.00, 0.00, 0.00, 1.00, 0.00],
-    'U':[0.00, 0.00, 0.00, 0.00, 0.00],
-    'N':[0.20, 0.20, 0.20, 0.20, 0.20],
-    'R':[0.50, 0.00, 0.50, 0.00, 0.00],
-    'M':[0.50, 0.50, 0.00, 0.00, 0.00], # A or C
-    'S':[0.00, 0.50, 0.50, 0.00, 0.00], # C or G
-    'K':[0.00, 0.00, 0.333, 0.333, 0.333], # G, T, or U
-    'W':[0.333, 0.00, 0.00, 0.333, 0.333], # A, T, or U
-    'Y':[0.00, 0.333, 0.00, 0.333, 0.333]} # C, T, ur U
+    'A':[1.00, 0.00, 0.00, 0.00],
+    'C':[0.00, 1.00, 0.00, 0.00],
+    'G':[0.00, 0.00, 1.00, 0.00],
+    'T':[0.00, 0.00, 0.00, 1.00]
+}
 
 
 def translate_seq_to_training_input(seq, M, start_stop_indices, verbose=False):
     ##S = 1
     N = len(seq)
     ##M = 100
-    training_data = np.zeros((N-M+1, M, 5))
+    training_data = np.zeros((N-M+1, M, 4))
     for start, partial_seq in enumerate(get_2D_sequence(seq, start_stop_indices=start_stop_indices)):
         #print(partial_seq)
         for n, nucleotide in enumerate(partial_seq):
@@ -128,6 +141,10 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
 
     start_stop_indices = get_start_stop(seq_length, im_width)
 
+    allowed_letters = set('ACGT')
+
+    ambiguous_base_seq_count = 0
+
     # i is the current output row index
     # r is the current input row index
     # they may not be equal
@@ -135,7 +152,12 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
     t0 = time.time()
     for r, record in enumerate(itertools.islice(SeqIO.parse(fasta_fp, "fasta"), im_limit)):
         if len(record.seq) != seq_length:
+            # found a short sequence
             print('{} record.seq length: {} != {}'.format(r, len(record.seq), seq_length))
+        elif len(set(str(record.seq)).difference(allowed_letters)) > 0:
+            # found a sequence with letters other than A,C,G,T
+            ambiguous_base_seq_count += 1
+            #print('found some funky letters: {}'.format(set(str(record.seq)).difference(allowed_letters)))
         else:
             dset[i, :, :, :] = translate_seq_to_training_input(
                 seq=str(record.seq),
@@ -147,18 +169,27 @@ def write_images_to_dataset(dset, fasta_fp, im_limit):
             print('finished 100 records in {:5.2f}s'.format(i, time.time() - t0))
             t0 = time.time()
 
+    print('found {} sequences with ambiguous bases'.format(ambiguous_base_seq_count))
+
     # return the number of images written to dset
     return i + 1
 
 
-def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_width, image_limit=None):
-    phage_seq_count, phage_letter_counter = count_fasta_sequences_and_letters(fasta_fp=phage_fp)
-    print('{} sequences in file "{}"'.format(phage_seq_count, phage_fp))
-    print('  {}'.format(phage_letter_counter))
+def write_phage_prok_cnn_training_file(phage_fp, prok_fp, output_h5_fp, image_width, image_limit, counts):
+    if counts:
+        phage_seq_count, phage_letter_counter = count_fasta_sequences_and_letters(fasta_fp=phage_fp)
+        print('{} sequences in file "{}"'.format(phage_seq_count, phage_fp))
+        print('  {}'.format(phage_letter_counter))
 
-    prok_seq_count, prok_letter_counter = count_fasta_sequences_and_letters(fasta_fp=prok_fp)
-    print('{} sequences in file "{}"'.format(prok_seq_count, prok_fp))
-    print('  {}'.format(prok_letter_counter))
+        prok_seq_count, prok_letter_counter = count_fasta_sequences_and_letters(fasta_fp=prok_fp)
+        print('{} sequences in file "{}"'.format(prok_seq_count, prok_fp))
+        print('  {}'.format(prok_letter_counter))
+
+    else:
+        phage_seq_count = count_fasta_sequences(fasta_fp=phage_fp)
+        print('{} sequences in file "{}"'.format(phage_seq_count, phage_fp))
+        prok_seq_count = count_fasta_sequences(fasta_fp=prok_fp)
+        print('{} sequences in file "{}"'.format(prok_seq_count, prok_fp))
 
     # phage_prok_pair_count = min(phage_seq_count, prok_seq_count)
     # print('allocating space for {} phage-prokaryote pairs'.format(phage_prok_pair_count))
