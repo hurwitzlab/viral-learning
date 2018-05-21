@@ -4,7 +4,9 @@ import sklearn.utils
 
 
 class CNNData:
-    def __init__(self, input_fp, batch_size, phage_dset_name, phage_training_range, prok_dset_name, prok_training_range):
+    def __init__(self, input_fp, batch_size, phage_dset_name, phage_training_range, prok_dset_name, prok_training_range, dev_parameters):
+        self.name = 'CNNData'
+
         self.fp = input_fp
         self.requested_batch_size = batch_size
 
@@ -43,6 +45,13 @@ class CNNData:
         print('  phage batch count                 : {}'.format(self.phage_batch_count))
         print('  prokaryote batch count            : {}'.format(self.prok_batch_count))
 
+        self.phage_dev_range = dev_parameters['phage_range']
+        self.prok_dev_range = dev_parameters['prok_range']
+
+        self.all_dev_sets = (
+            ('dev', self.prok_dset_name, self.prok_dev_range, self.phage_dset_name, self.phage_dev_range)
+        )
+
         with h5py.File(name=self.fp) as f:
             self.phage_dset_shape = f[self.phage_dset_name].shape
             print(self.phage_dset_shape)
@@ -60,8 +69,6 @@ class CNNData:
 
     def get_dev_set_names(self):
         return ('dev set', )
-
-    #def get_training_mini_batches(train_test_file, yield_state=True):
 
     def get_training_mini_batches(self, data_file, shuffle_batch=True, yield_state=False):
         """
@@ -127,5 +134,61 @@ class CNNData:
 
             print('generator "{}" epoch {} has ended'.format(self.name, epoch))
 
-    def get_dev_generators(self):
-        return None
+    def get_dev_generators(self, data_file):
+        """
+        Yield development set generators.
+
+        """
+
+        def dev_gen(bdset, vdset, bnm, vnm):
+            labels = np.vstack((
+                np.zeros((bnm[0][1] - bnm[0][0], 1)),
+                np.ones((vnm[0][1] - vnm[0][0], 1))
+            ))
+
+            for (bn, bm), (vn, vm) in zip(bnm, vir_start_stop):
+                # print('loading validation data slice {}:{}'.format(n, m))
+
+                batch = np.vstack((
+                    bdset[bn:bm, :],
+                    vdset[vn:vm, :]
+                ))
+
+                yield (batch, labels)
+
+        for dev_set_name, bact_dset_name, bact_sample_interval, vir_dset_name, vir_sample_interval in self.all_dev_sets:
+            bacteria_dset = data_file[bact_dset_name]
+            virus_dset = data_file[vir_dset_name]
+
+            print('loading validation data "{}" with shape {} interval {}'.format(bacteria_dset.name, bacteria_dset.shape, bact_sample_interval))
+            print('loading validation data "{}" with shape {} interval {}'.format(virus_dset.name, virus_dset.shape, vir_sample_interval))
+
+            # how many mini batches will there be?
+            # for example, given:
+            #   b = bact_sample_interval = (0, 10000)
+            #   v = vir_sample_interval = (0, 10000)
+            #   self.half_batch_size = 100
+            # construct a list of all mini batch start indices:
+            #   bact_start = range(b[0], b[1], self.half_batch_size) = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+            #   vir_start = range(v[0], v[1], self.half_batch_size) = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+            # construct a list of mini batch (start, stop) indices
+            #   bact_start_stop = zip(bact_start, [start + self.half_batch_size for start in bact_start])
+            #                   = [(0, 100), (100, 200), ..., (900, 1000)]
+            #   vir_start_stop = zip(vir_start, [start + self.half_batch_size for start in vir_start])
+            #                  = [(0, 100), (100, 200), ..., (900, 1000)]
+
+            half_batch_size = self.actual_batch_size // 2
+
+            bact_start = range(bact_sample_interval[0], bact_sample_interval[1], half_batch_size)
+            vir_start = range(vir_sample_interval[0], vir_sample_interval[1], half_batch_size)
+
+            bact_start_stop = tuple(zip(bact_start, [start + half_batch_size for start in bact_start]))
+            vir_start_stop = tuple(zip(bact_start, [start + half_batch_size for start in vir_start]))
+
+            steps = min(len(bact_start_stop), len(vir_start_stop))
+
+            yield steps, dev_set_name, dev_gen(
+                bdset=bacteria_dset,
+                vdset=virus_dset,
+                bnm=bact_start_stop,
+                vnm=vir_start_stop)
