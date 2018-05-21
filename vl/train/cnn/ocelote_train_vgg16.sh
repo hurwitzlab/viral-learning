@@ -1,5 +1,7 @@
 #!/bin/sh
 
+source activate ktf
+
 h5ls /extra/jklynch/phage_prok_500.h5
 
 python train_vgg.py \
