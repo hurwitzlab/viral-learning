@@ -122,15 +122,17 @@ def get_vgg_16_model(input_shape):
 
 
 def train_vgg(input_fp, train, dev, test, epochs):
-    names_and_ranges = parse_command_line_name_and_range(train)
+    training_names_and_ranges = parse_command_line_name_and_range(train)
+    dev_parameters = parse_command_line_name_and_range(dev)
 
     data = CNNData(
         input_fp=input_fp,
         batch_size=64,
-        phage_dset_name=names_and_ranges['phage_dset_name'],
-        phage_training_range=names_and_ranges['phage_range'],
-        prok_dset_name=names_and_ranges['prok_dset_name'],
-        prok_training_range=names_and_ranges['prok_range'])
+        phage_dset_name=training_names_and_ranges['phage_dset_name'],
+        phage_training_range=training_names_and_ranges['phage_range'],
+        prok_dset_name=training_names_and_ranges['prok_dset_name'],
+        prok_training_range=training_names_and_ranges['prok_range'],
+        dev_parameters=dev_parameters)
 
     model = get_vgg_16_model(input_shape=data.get_input_shape())
 
