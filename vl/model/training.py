@@ -14,10 +14,12 @@ from keras.layers import Dense, Dropout, BatchNormalization
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-plt.switch_backend('agg')
 
 import numpy as np
 import pandas as pd
+
+
+plt.switch_backend('agg')
 
 
 def train_and_evaluate(model, model_name, training_epochs, the_data):
@@ -50,7 +52,7 @@ def train_and_evaluate(model, model_name, training_epochs, the_data):
     with h5py.File(the_data.fp, 'r', libver='latest', swmr=True) as train_test_file:
         # train for all epochs
         t0 = time.time()
-        for train_X, train_y, step, epoch in the_data.get_training_mini_batches(train_test_file, yield_state=True):
+        for train_X, train_y, step, epoch in the_data.get_training_mini_batches(data_file=train_test_file, yield_state=True):
             if epoch > training_epochs:
                 print('completed {} training epochs'.format(training_epochs))
                 break
@@ -109,7 +111,7 @@ def build_layer(model_name, layer_type, kwargs):
     return layer
 
 
-def build_model(model, layers, input_dim=None):
+def build_model(layers, model=None, input_dim=None):
     """
     Build and return a Sequential model with Dense layers given by the layers argument.
 
@@ -122,8 +124,10 @@ def build_model(model, layers, input_dim=None):
         model_name (str) a name for the model
         model      (Model) a compiled model
     """
+    if model is None:
+        model = Sequential()
+
     model_name = io.StringIO()
-    #model = Sequential()
     layer_type, kwargs = layers[0]
     if input_dim is None:
         pass
