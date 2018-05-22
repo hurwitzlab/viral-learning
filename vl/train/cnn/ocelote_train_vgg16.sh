@@ -14,7 +14,7 @@ h5ls /extra/jklynch/phage_prok_500.h5
 
 cd ~/project/viral-learning/vl/train/cnn
 
-python train_vgg.py \
+time python train_vgg.py \
     --input-fp /extra/jklynch/phage_prok_500.h5 \
     --train phage500_training_set.fa:0:10000,proc500_training_set.fasta:0:10000 \
     --dev phage500_training_set.fa:80000:81000,proc500_training_set.fasta:80000:81000 \
