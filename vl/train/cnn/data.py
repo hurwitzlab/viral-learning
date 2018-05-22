@@ -101,7 +101,9 @@ class CNNData:
 
         # bacteria label is 0
         # virus label is 1
-        labels = np.vstack((np.zeros((self.prok_sample_count_batch, 1)), np.ones((self.phage_sample_count_batch, 1))))
+        labels = np.vstack((
+            np.zeros((self.prok_sample_count_batch, 1)),
+            np.ones((self.phage_sample_count_batch, 1))))
 
         # this is a never ending generator
         epoch = 0
@@ -109,8 +111,8 @@ class CNNData:
             epoch += 1
 
             step = 0
-            for bacteria_n, virus_n in zip(range(*self.prok_training_range, self.prok_batch_count),
-                                           range(*self.phage_training_range, self.phage_batch_count)):
+            for bacteria_n, virus_n in zip(range(*self.prok_training_range, self.prok_sample_count_batch),
+                                           range(*self.phage_training_range, self.phage_sample_count_batch)):
                 step += 1
 
                 bacteria_m = bacteria_n + self.prok_sample_count_batch
@@ -118,8 +120,7 @@ class CNNData:
 
                 batch = np.vstack((
                     bacteria_dset[bacteria_n:bacteria_m, :],
-                    virus_dset[virus_n:virus_m, :]
-                ))
+                    virus_dset[virus_n:virus_m, :]))
 
                 return_tuple = (batch, labels)
                 if shuffle_batch:
