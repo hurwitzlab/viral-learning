@@ -49,7 +49,7 @@ class CNNData:
         self.prok_dev_range = dev_parameters['prok_range']
 
         self.all_dev_sets = (
-            ('dev', self.prok_dset_name, self.prok_dev_range, self.phage_dset_name, self.phage_dev_range)
+            ('dev', self.prok_dset_name, self.prok_dev_range, self.phage_dset_name, self.phage_dev_range),
         )
 
         with h5py.File(name=self.fp) as f:
