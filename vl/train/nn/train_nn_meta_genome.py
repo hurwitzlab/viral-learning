@@ -56,7 +56,7 @@ def main():
 
     first_stage_network_depths = (
         (('Dense', {'units': 128, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.2}),
+         ('Dropout', {'rate': 0.4}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
          ('Dropout', {'rate': 0.2}),
          ('Dense', {'units': 32, 'activation': 'relu'}),

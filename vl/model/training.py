@@ -49,12 +49,13 @@ def train_and_evaluate(model, model_name, training_epochs, the_data):
 
     # n counts number of training iterations
     n = 0
+    t0 = time.time()
     with h5py.File(the_data.fp, 'r', libver='latest', swmr=True) as train_test_file:
         # train for all epochs
-        t0 = time.time()
+        t00 = time.time()
         for train_X, train_y, step, epoch in the_data.get_training_mini_batches(data_file=train_test_file, yield_state=True):
             if epoch > training_epochs:
-                print('completed {} training epochs'.format(training_epochs))
+                print('completed {} training epochs in {:5.2f}s'.format(training_epochs, time.time()-t0))
                 break
             else:
                 # train on one mini batch
@@ -65,9 +66,11 @@ def train_and_evaluate(model, model_name, training_epochs, the_data):
             # look at performance on dev data after each epoch
             # re-plot the training and dev metrics after each epoch
             if step == steps_per_epoch:
-                print('{:5.2f}s per step'.format((time.time()-t0)/steps_per_epoch))
+                print('completed training epoch {} in {:5.2f}s'.format(epoch, time.time()-t00))
+                print('{} steps per epoch'.format(steps_per_epoch))
+                print('{:5.2f}s per step'.format((time.time()-t00)/steps_per_epoch))
                 print(training_metrics_df.loc[n-2:n-1])
-                t0 = time.time()
+                t00 = time.time()
                 print('evaluate the model on the dev set(s)')
 
                 for dev_steps, dev_set_name, dev_generator in the_data.get_dev_generators(train_test_file):
