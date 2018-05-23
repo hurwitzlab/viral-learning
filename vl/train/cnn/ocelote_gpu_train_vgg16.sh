@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#PBS -N train_cnn_vgg16
+#PBS -N gpu_train_cnn_vgg16
 #PBS -m bea
 #PBS -M jklynch@email.arizona.edu
 #PBS -W group_list=bhurwitz
