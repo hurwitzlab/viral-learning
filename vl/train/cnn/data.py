@@ -68,7 +68,7 @@ class CNNData:
         return self.actual_batch_count
 
     def get_dev_set_names(self):
-        return ('dev set', )
+        return tuple([dev_set_name for dev_set_name, *_ in self.all_dev_sets])
 
     def get_training_mini_batches(self, data_file, shuffle_batch=True, yield_state=False):
         """
