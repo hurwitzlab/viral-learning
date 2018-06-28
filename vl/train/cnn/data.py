@@ -70,7 +70,8 @@ class CNNData:
     def get_dev_set_names(self):
         return tuple([dev_set_name for dev_set_name, *_ in self.all_dev_sets])
 
-    def get_training_mini_batches(self, data_file, shuffle_batch=True, yield_state=False):
+    #def get_training_mini_batches(self, data_file, shuffle_batch=True, yield_state=False):
+    def get_training_data_generator(self):
         """
         Return batches of input and labels from a combined H5 file.
 
@@ -86,56 +87,60 @@ class CNNData:
         Yield:
             (batch, labels, step, epoch) tuple of (half_batch_size*2, features) and (half_batch_size*2, 1) labels
         """
-        bacteria_dset = data_file[self.prok_dset_name]
-        virus_dset = data_file[self.phage_dset_name]
+        def training_data_generator(shuffle_batch=True, yield_state=False):
+            with h5py.File(self.fp, 'r', libver='latest', swmr=True) as train_test_file:
+                bacteria_dset = train_test_file[self.prok_dset_name]
+                virus_dset = train_test_file[self.phage_dset_name]
 
-        print('reading bacteria dataset "{}" with shape {}'.format(bacteria_dset.name, bacteria_dset.shape))
-        print('reading virus dataset "{}" with shape {}'.format(virus_dset.name, virus_dset.shape))
+                print('reading bacteria dataset "{}" with shape {}'.format(bacteria_dset.name, bacteria_dset.shape))
+                print('reading virus dataset "{}" with shape {}'.format(virus_dset.name, virus_dset.shape))
 
-        print('{} batches of {} samples will be yielded in each epoch'.format(self.actual_batch_count, self.actual_batch_size))
+                print('{} batches of {} samples will be yielded in each epoch'.format(self.actual_batch_count, self.actual_batch_size))
 
-        if shuffle_batch:
-            print('batches and labels will be shuffled')
-        else:
-            print('batches and labels will NOT be shuffled')
-
-        # bacteria label is 0
-        # virus label is 1
-        labels = np.vstack((
-            np.zeros((self.prok_sample_count_batch, 1)),
-            np.ones((self.phage_sample_count_batch, 1))))
-
-        # this is a never ending generator
-        epoch = 0
-        while True:
-            epoch += 1
-
-            step = 0
-            for bacteria_n, virus_n in zip(range(*self.prok_training_range, self.prok_sample_count_batch),
-                                           range(*self.phage_training_range, self.phage_sample_count_batch)):
-                step += 1
-
-                bacteria_m = bacteria_n + self.prok_sample_count_batch
-                virus_m = virus_n + self.phage_sample_count_batch
-
-                batch = np.vstack((
-                    bacteria_dset[bacteria_n:bacteria_m, :],
-                    virus_dset[virus_n:virus_m, :]))
-
-                return_tuple = (batch, labels)
                 if shuffle_batch:
-                    # yield shuffled views
-                    # the source arrays are not modified
-                    return_tuple = sklearn.utils.shuffle(*return_tuple)
+                    print('batches and labels will be shuffled')
+                else:
+                    print('batches and labels will NOT be shuffled')
 
-                if yield_state:
-                    return_tuple = (*return_tuple, step, epoch)
+                # bacteria label is 0
+                # virus label is 1
+                labels = np.vstack((
+                    np.zeros((self.prok_sample_count_batch, 1)),
+                    np.ones((self.phage_sample_count_batch, 1))))
 
-                yield return_tuple
+                # this is a never ending generator
+                epoch = 0
+                while True:
+                    epoch += 1
 
-            print('generator "{}" epoch {} has ended'.format(self.name, epoch))
+                    step = 0
+                    for bacteria_n, virus_n in zip(range(*self.prok_training_range, self.prok_sample_count_batch),
+                                                   range(*self.phage_training_range, self.phage_sample_count_batch)):
+                        step += 1
 
-    def get_dev_generators(self, data_file):
+                        bacteria_m = bacteria_n + self.prok_sample_count_batch
+                        virus_m = virus_n + self.phage_sample_count_batch
+
+                        batch = np.vstack((
+                            bacteria_dset[bacteria_n:bacteria_m, :],
+                            virus_dset[virus_n:virus_m, :]))
+
+                        return_tuple = (batch, labels)
+                        if shuffle_batch:
+                            # yield shuffled views
+                            # the source arrays are not modified
+                            return_tuple = sklearn.utils.shuffle(*return_tuple)
+
+                        if yield_state:
+                            return_tuple = (*return_tuple, step, epoch)
+
+                        yield return_tuple
+
+                    print('generator "{}" epoch {} has ended'.format(self.name, epoch))
+
+        return training_data_generator
+
+    def get_dev_generators(self):
         """
         Yield development set generators.
 

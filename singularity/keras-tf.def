@@ -1,9 +1,15 @@
 Bootstrap: docker
-From: tensorflow/tensorflow:latest-py3
+From: ubuntu:16.04
+#From: tensorflow/tensorflow:latest-py3
 
 %post
    apt update
-   pip3 install keras pandas scikit-learn scipy
+   apt -y full-upgrade
+   apt install -y python3-dev python3-pip
+   pip3 install --upgrade pip==9.0.1
+   pip3 install tensorflow
+   pip3 install pandas
+   pip3 install keras --no-deps
 
 %environment
 

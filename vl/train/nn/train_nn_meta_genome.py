@@ -58,8 +58,8 @@ def main():
         (('Dense', {'units': 128, 'activation': 'relu'}),
          ('Dropout', {'rate': 0.4}),
          ('Dense', {'units': 64, 'activation': 'relu'}),
-         ('Dropout', {'rate': 0.2}),
-         ('Dense', {'units': 32, 'activation': 'relu'}),
+         #('Dropout', {'rate': 0.2}),
+         #('Dense', {'units': 32, 'activation': 'relu'}),
          ('Dense', {'units': 1, 'activation': 'sigmoid'})),
     )
 

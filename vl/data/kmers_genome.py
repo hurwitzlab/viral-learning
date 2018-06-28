@@ -57,7 +57,7 @@ import numpy as np
 from sklearn.utils import shuffle
 
 
-class BacteriaAndVirusKMers:
+class BacteriaAndVirusGenomeKMers:
 
     def __init__(self, fp, pb, k, half_batch_size, training_sample_count=90000, development_sample_count=10000):
         self.name = 'Bacteria and Virus KMers'
@@ -93,8 +93,15 @@ class BacteriaAndVirusKMers:
             (self.bacteria_training_interval[1] - self.bacteria_training_interval[0]) // self.half_batch_size,
             (self.virus_training_interval[1] - self.virus_training_interval[0]) // self.half_batch_size)
 
-        self.bacteria_development_interval = (self.training_sample_count, self.bacteria_sample_count)
-        self.virus_development_interval = (self.training_sample_count, self.virus_sample_count)
+        self.bacteria_development_interval = (self.bacteria_sample_count - self.training_sample_count, self.bacteria_sample_count)
+        self.virus_development_interval = (self.virus_sample_count - self.training_sample_count, self.virus_sample_count)
+
+        self.all_dev_sets = (
+            (
+                'dev genomes',
+                '/Proc/{}pb/kmers{}'.format(pb, k), self.bacteria_development_interval,
+                '/Phage/{}pb/kmers{}'.format(pb, k), self.virus_development_interval
+            ),)
 
     def get_training_mini_batches_per_epoch(self):
         return self.training_sample_count // self.batch_size

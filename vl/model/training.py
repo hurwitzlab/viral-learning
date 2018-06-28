@@ -6,8 +6,6 @@ import os
 import sys
 import time
 
-import h5py
-
 from keras import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
 
@@ -50,47 +48,55 @@ def train_and_evaluate(model, model_name, training_epochs, the_data):
     # n counts number of training iterations
     n = 0
     t0 = time.time()
-    with h5py.File(the_data.fp, 'r', libver='latest', swmr=True) as train_test_file:
-        # train for all epochs
-        t00 = time.time()
-        for train_X, train_y, step, epoch in the_data.get_training_mini_batches(data_file=train_test_file, yield_state=True):
-            if epoch > training_epochs:
-                print('completed {} training epochs in {:5.2f}s'.format(training_epochs, time.time()-t0))
-                break
-            else:
-                # train on one mini batch
-                training_metrics = model.train_on_batch(train_X, train_y)
-                training_metrics_df.loc[n, model.metrics_names] = training_metrics
-                n += 1
+    ##with h5py.File(the_data.fp, 'r', libver='latest', swmr=True) as train_test_file:
+    # train for all epochs
+    t00 = time.time()
+    ##for train_X, train_y, step, epoch in the_data.get_training_mini_batches(data_file=train_test_file, yield_state=True):
+    for train_X, train_y, step, epoch in the_data.get_training_data_generator()(yield_state=True):
+        if epoch > training_epochs:
+            print('completed {} training epochs in {:5.2f}s'.format(training_epochs, time.time()-t0))
+            break
+        else:
+            # train on one mini batch
+            print('training on batch {} ({})'.format(step, steps_per_epoch))
+            training_metrics = model.train_on_batch(train_X, train_y)
+            training_metrics_df.loc[n, model.metrics_names] = training_metrics
+            n += 1
 
-            # look at performance on dev data after each epoch
-            # re-plot the training and dev metrics after each epoch
-            if step == steps_per_epoch:
-                print('completed training epoch {} in {:5.2f}s'.format(epoch, time.time()-t00))
-                print('{} steps per epoch'.format(steps_per_epoch))
-                print('{:5.2f}s per step'.format((time.time()-t00)/steps_per_epoch))
-                print(training_metrics_df.loc[n-2:n-1])
-                t00 = time.time()
-                print('evaluate the model on the dev set(s)')
+        # look at performance on dev data after each epoch
+        # re-plot the training and dev metrics after each epoch
+        if step == steps_per_epoch:
+            print('completed training epoch {} in {:5.2f}s'.format(epoch, time.time()-t00))
+            print('{} steps per epoch'.format(steps_per_epoch))
+            print('{:5.2f}s per step'.format((time.time()-t00)/steps_per_epoch))
+            print(training_metrics_df.loc[n-2:n])
+            t00 = time.time()
+            print('evaluate the model on the dev set(s)')
 
-                for dev_steps, dev_set_name, dev_generator in the_data.get_dev_generators(train_test_file):
-                    sys.stdout.write('.')
-                    #print('dev set: "{}"'.format(dev_set_name))
-                    #print('  dev steps: {}'.format(dev_steps))
-                    dev_metrics = model.evaluate_generator(generator=dev_generator, steps=dev_steps)
-                    dev_metrics_df.loc[epoch-1, (dev_set_name, model.metrics_names)] = dev_metrics
-                sys.stdout.write('\n')
-                print('dev metrics:\n{}'.format(dev_metrics_df.loc[epoch-1]))
+            #evaluate_dev_sets(epoch=epoch, model=model, the_data=the_data, train_test_file=train_test_file, dev_metrics_df=dev_metrics_df)
+            evaluate_dev_sets(epoch=epoch, model=model, the_data=the_data, dev_metrics_df=dev_metrics_df)
 
-                plot_training_and_dev_metrics(
-                    training_metrics_df,
-                    dev_metrics_df,
-                    model_name=model_name,
-                    steps_per_epoch=steps_per_epoch,
-                    epoch_count=training_epochs,
-                    output_fp=model_name + '.pdf')
+            plot_training_and_dev_metrics(
+                training_metrics_df,
+                dev_metrics_df,
+                model_name=model_name,
+                steps_per_epoch=steps_per_epoch,
+                epoch_count=training_epochs,
+                output_fp=model_name + '.pdf')
 
     return training_metrics_df, dev_metrics_df
+
+
+def evaluate_dev_sets(epoch, model, the_data, dev_metrics_df):
+
+    for dev_steps, dev_set_name, dev_generator in the_data.get_dev_generators():
+        sys.stdout.write('.')
+        # print('dev set: "{}"'.format(dev_set_name))
+        # print('  dev steps: {}'.format(dev_steps))
+        dev_metrics = model.evaluate_generator(generator=dev_generator, steps=dev_steps)
+        dev_metrics_df.loc[epoch - 1, (dev_set_name, model.metrics_names)] = dev_metrics
+    sys.stdout.write('\n')
+    print('dev metrics:\n{}'.format(dev_metrics_df.loc[epoch - 1]))
 
 
 def build_layer(model_name, layer_type, kwargs):
@@ -195,7 +201,7 @@ def plot_training_and_dev_metrics(training_metrics_df, dev_metrics_df, model_nam
             ax1.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
             ax1.set_xticklabels([0] + list(range(epoch_count+1)))
             ax1.set_ylabel('loss')
-            ax1.legend(legend, loc=3)
+            ax1.legend(legend, loc='lower left')
 
             ax2 = ax1.twinx()
             legend = []
@@ -211,7 +217,7 @@ def plot_training_and_dev_metrics(training_metrics_df, dev_metrics_df, model_nam
             ax2.set_ylim(0.0, 1.0)
             ax2.set_ylabel('accuracy')
             print(legend)
-            ax2.legend(legend, loc=7)
+            ax2.legend(legend, loc='lower right')
 
             pdfpages.savefig()
 
